@@ -3,43 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ProScore Elite | Live</title>
+    <title>ProScore Elite | Live Results</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #020617; --card: rgba(15, 23, 42, 0.8);
+            --bg: #020617; --card: rgba(15, 23, 42, 0.85);
             --red: #f43f5e; --text: #f8fafc;
             --muted: #94a3b8; --border: rgba(255, 255, 255, 0.08); --accent: #38bdf8;
         }
-        body { margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
-        header { background: rgba(2, 6, 23, 0.9); backdrop-filter: blur(12px); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--border); }
+        body { margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); }
+        header { background: rgba(2, 6, 23, 0.95); backdrop-filter: blur(12px); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--border); }
         .filters { padding: 15px; max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
-        .search-box, .league-select { width: 100%; padding: 12px; border-radius: 14px; background: var(--card); border: 1px solid var(--border); color: #fff; outline: none; transition: 0.3s; font-size: 14px; }
-        .search-box:focus { border-color: var(--accent); box-shadow: 0 0 15px rgba(56, 189, 248, 0.2); }
+        .search-box, .league-select { width: 100%; padding: 12px; border-radius: 14px; background: var(--card); border: 1px solid var(--border); color: #fff; outline: none; font-size: 14px; }
         .container { padding: 10px; max-width: 600px; margin: 0 auto; padding-bottom: 100px; }
-        .match-card { background: var(--card); border-radius: 24px; padding: 20px; margin-bottom: 16px; border: 1px solid var(--border); backdrop-filter: blur(8px); position: relative; overflow: hidden; }
-        .match-header { text-align: center; font-size: 10px; color: var(--accent); margin-bottom: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+        .match-card { background: var(--card); border-radius: 24px; padding: 20px; margin-bottom: 16px; border: 1px solid var(--border); backdrop-filter: blur(8px); }
+        .league-title { text-align: center; font-size: 10px; color: var(--accent); margin-bottom: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
         .match-body { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
         .team-side { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; }
-        .team-logo { width: 52px; height: 52px; object-fit: contain; padding: 4px; background: rgba(255,255,255,0.03); border-radius: 12px; transition: 0.3s; }
-        .team-name { font-weight: 700; font-size: 13px; text-align: center; color: var(--text); max-width: 100px; overflow: hidden; text-overflow: ellipsis; }
-        .score-area { text-align: center; flex: 0 0 100px; }
-        .score { font-size: 32px; font-weight: 800; letter-spacing: -1px; color: #fff; line-height: 1; margin-bottom: 5px; }
-        .minute-badge { font-size: 10px; padding: 4px 12px; border-radius: 20px; background: #000; color: #fff; font-weight: 700; display: inline-block; }
+        .team-logo { width: 50px; height: 50px; object-fit: contain; background: rgba(255,255,255,0.05); border-radius: 14px; padding: 5px; }
+        .team-name { font-weight: 700; font-size: 13px; text-align: center; color: var(--text); }
+        .score-area { text-align: center; flex: 0 0 90px; }
+        .score { font-size: 30px; font-weight: 800; color: #fff; line-height: 1; margin-bottom: 5px; }
+        .minute-badge { font-size: 10px; padding: 4px 12px; border-radius: 20px; background: #000; color: #fff; font-weight: 700; }
         .live-pulse { background: var(--red); box-shadow: 0 0 12px rgba(244, 63, 94, 0.4); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
-        .goals-container { margin-top: 15px; padding-top: 12px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
-        .goal-item { margin-bottom: 2px; }
-        .btn-refresh { background: var(--accent); color: #000; border: none; padding: 8px 16px; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 12px; }
+        .goals-box { margin-top: 15px; padding-top: 12px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+        .btn-refresh { background: var(--accent); color: #000; border: none; padding: 8px 16px; border-radius: 10px; font-weight: 700; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <header>
-    <div style="display: flex; align-items: center; gap: 8px;">
-        <div style="width: 10px; height: 10px; background: var(--red); border-radius: 50%;" class="live-pulse"></div>
-        <h1 style="font-size:18px; font-weight:800; color:#fff; margin:0; letter-spacing:-0.5px;">PROSCORE<span style="color:var(--accent)">.ELITE</span></h1>
-    </div>
+    <h1 style="font-size:18px; font-weight:800; margin:0;">PROSCORE<span style="color:var(--accent)">.ELITE</span></h1>
     <button class="btn-refresh" onclick="fetchData()">YENİLƏ</button>
 </header>
 
@@ -51,7 +46,7 @@
 </div>
 
 <div class="container" id="matchContainer">
-    <div style="text-align:center; padding:50px; color:var(--muted)">Oyunlar yüklənir...</div>
+    <div style="text-align:center; padding:50px; color:var(--muted)">Yüklənir...</div>
 </div>
 
 <script>
@@ -97,16 +92,16 @@
         }
 
         container.innerHTML = filtered.map(m => {
-            // Sənin serverinin loqo proxy linkləri (Orijinal Livescore loqoları)
-            const homeLogo = m.homeImgId ? `${API_URL}/proxy-logo?imgId=${m.homeImgId}` : '';
-            const awayLogo = m.awayImgId ? `${API_URL}/proxy-logo?imgId=${m.awayImgId}` : '';
+            // Serverdəki yeni Proxy-dən AD ilə loqo çəkirik
+            const homeLogo = `${API_URL}/proxy-logo?name=${encodeURIComponent(m.home)}`;
+            const awayLogo = `${API_URL}/proxy-logo?name=${encodeURIComponent(m.away)}`;
             
             // Loqo tapılmayanda çıxan estetik hərflər
             const fallback = (name) => `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=1e293b&color=38bdf8&bold=true&rounded=true`;
 
             return `
                 <div class="match-card">
-                    <div class="match-header">${m.league}</div>
+                    <div class="league-title">${m.league}</div>
                     <div class="match-body">
                         <div class="team-side">
                             <img src="${homeLogo}" class="team-logo" onerror="this.onerror=null; this.src='${fallback(m.home)}';">
@@ -122,12 +117,12 @@
                         </div>
                     </div>
                     ${m.scorers && m.scorers.length > 0 ? `
-                    <div class="goals-container">
+                    <div class="goals-box">
                         <div style="flex:1">
-                            ${m.scorers.filter(s => s.side === 1).map(s => `<div class="goal-item">⚽ ${s.name} ${s.time}'</div>`).join("")}
+                            ${m.scorers.filter(s => s.side === 1).map(s => `<div>⚽ ${s.name} ${s.time}'</div>`).join("")}
                         </div>
                         <div style="flex:1; text-align:right">
-                            ${m.scorers.filter(s => s.side === 2).map(s => `<div class="goal-item">${s.name} ${s.time}' ⚽</div>`).join("")}
+                            ${m.scorers.filter(s => s.side === 2).map(s => `<div>${s.name} ${s.time}' ⚽</div>`).join("")}
                         </div>
                     </div>` : ''}
                 </div>
@@ -138,7 +133,6 @@
     document.getElementById("searchInput").addEventListener("input", renderMatches);
     document.getElementById("leagueFilter").addEventListener("change", renderMatches);
 
-    // İlk yükləmə və avtomatik yeniləmə (45 saniyə)
     fetchData();
     setInterval(fetchData, 45000);
 </script>
