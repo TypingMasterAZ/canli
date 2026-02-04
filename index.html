@@ -2,262 +2,88 @@
 <html lang="az">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ProScore Elite | Live</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #020617; 
-            --card: rgba(30, 41, 59, 0.7);
-            --green: #22c55e; 
-            --red: #f43f5e; 
-            --text: #f8fafc; 
-            --muted: #94a3b8; 
-            --border: rgba(255, 255, 255, 0.1); 
-            --accent: #38bdf8;
+            --bg: #020617; --card: rgba(30, 41, 59, 0.7);
+            --green: #22c55e; --red: #f43f5e; --text: #f8fafc;
+            --muted: #94a3b8; --border: rgba(255, 255, 255, 0.1); --accent: #38bdf8;
         }
-
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        
+        * { box-sizing: border-box; }
         body { 
-            margin: 0; 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            background: var(--bg); 
-            color: var(--text); 
-            background-image: radial-gradient(circle at top right, #1e293b, #020617);
-            background-attachment: fixed;
-            min-height: 100vh;
+            margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); 
+            background-image: radial-gradient(circle at top right, #1e293b, #020617); background-attachment: fixed;
         }
-
         header {
-            background: rgba(2, 6, 23, 0.8);
-            backdrop-filter: blur(12px);
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            border-bottom: 1px solid var(--border);
+            background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(12px); padding: 15px 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--border);
         }
-
-        header h1 { 
-            margin: 0; 
-            font-size: 18px; 
-            font-weight: 800; 
-            background: linear-gradient(to right, #38bdf8, #818cf8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: -0.5px;
-        }
-
-        .lang-switcher { display: flex; gap: 8px; }
-        .lang-btn { 
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border);
-            color: var(--muted); 
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 11px;
-            cursor: pointer;
-            font-weight: 700;
-            transition: all 0.3s;
-        }
-        .lang-btn.active { 
-            background: var(--accent); 
-            color: #000; 
-            border-color: var(--accent);
-            box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
-        }
-
-        .filters { padding: 20px; max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
-        .search-box { 
-            width: 100%; padding: 14px 18px; border-radius: 14px; 
-            background: var(--card); border: 1px solid var(--border); color: #fff; outline: none;
-            transition: border 0.3s;
-        }
-        .search-box:focus { border-color: var(--accent); }
-
-        .league-select { 
-            width: 100%; padding: 12px; border-radius: 12px; 
-            background: var(--card); border: 1px solid var(--border); color: #fff; font-size: 13px; outline: none;
-        }
-
-        .container { padding: 0 15px 100px 15px; max-width: 600px; margin: 0 auto; }
-
-        .loader-container { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 100px 20px; }
-        .spinner { font-size: 50px; animation: ballMove 2s ease-in-out infinite; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2)); }
-        
-        @keyframes ballMove {
-            0%, 100% { transform: translateX(-50px) rotate(0deg); }
-            50% { transform: translateX(50px) rotate(360deg); }
-        }
-
-        .match-card { 
-            background: var(--card); border-radius: 24px; padding: 20px; margin-bottom: 16px; 
-            border: 1px solid var(--border); transition: transform 0.2s;
-        }
-        
-        .league-header { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 15px; opacity: 0.8; }
-        .league-logo { width: 18px; height: 18px; }
-        .league-title { font-size: 11px; font-weight: 700; color: var(--accent); letter-spacing: 0.5px; }
-
+        .lang-btn { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border); color: var(--muted); padding: 6px 12px; border-radius: 8px; cursor: pointer; }
+        .lang-btn.active { background: var(--accent); color: #000; }
+        .container { padding: 20px; max-width: 600px; margin: 0 auto; }
+        .match-card { background: var(--card); border-radius: 24px; padding: 20px; margin-bottom: 16px; border: 1px solid var(--border); }
         .match-body { display: flex; align-items: center; justify-content: space-between; }
         .team-side { flex: 1; display: flex; flex-direction: column; align-items: center; }
-        .team-logo { width: 54px; height: 54px; margin-bottom: 10px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); }
-        .team-name { font-weight: 700; font-size: 13px; text-align: center; color: #fff; line-height: 1.2; max-width: 110px; }
-        
+        .team-logo { width: 50px; height: 50px; object-fit: contain; margin-bottom: 10px; }
         .score-box { flex: 0 0 100px; text-align: center; }
-        .score { font-size: 32px; font-weight: 800; color: #fff; display: flex; justify-content: center; gap: 10px; margin-bottom: 5px; }
-        
-        .minute-badge { font-size: 10px; font-weight: 800; padding: 5px 12px; border-radius: 20px; background: #000; color: #fff; }
-        .live-bg { background: var(--red); box-shadow: 0 0 15px rgba(244, 63, 94, 0.4); animation: neonPulse 1.5s infinite; }
-        
-        @keyframes neonPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
-
-        .goals-container {
-            width: 100%; margin-top: 15px; display: flex; gap: 20px;
-            font-size: 11px; color: var(--muted); border-top: 1px solid var(--border); padding-top: 12px;
-        }
-        .goal-list { flex: 1; display: flex; flex-direction: column; gap: 4px; }
-        .home-goals { text-align: left; }
-        .away-goals { text-align: right; }
+        .score { font-size: 28px; font-weight: 800; }
+        .minute-badge { font-size: 10px; padding: 4px 10px; border-radius: 20px; background: #000; color: #fff; margin-top: 5px; display: inline-block; }
+        .live-bg { background: var(--red); }
     </style>
 </head>
 <body>
 
 <header>
-    <h1 id="brandLogo">PROSCORE ELITE</h1>
+    <h1 style="font-size:18px; font-weight:800; color:var(--accent)">PROSCORE ELITE</h1>
     <div class="lang-switcher">
-        <button class="lang-btn" id="btn-az" onclick="setLang('az')">AZ</button>
-        <button class="lang-btn" id="btn-en" onclick="setLang('en')">EN</button>
-        <button class="lang-btn" id="btn-ru" onclick="setLang('ru')">RU</button>
+        <button class="lang-btn active" onclick="location.reload()">YENİLƏ</button>
     </div>
 </header>
-
-<div class="filters">
-    <input type="text" id="searchInput" class="search-box">
-    <select id="leagueFilter" class="league-select"></select>
-</div>
 
 <div class="container" id="matchContainer"></div>
 
 <script>
-    let matches = [];
-    let currentLang = localStorage.getItem('prefLang') || 'az';
-
-    const i18n = {
-        az: { brand: "PROSCORE ELITE", search: "Klub, ölkə və ya liqa...", allLeagues: "BÜTÜN LİQALAR", loading: "MƏLUMATLAR YÜKLƏNİR", noMatch: "Oyun tapılmadı", error: "Bağlantı xətası", live: "CANLI", ht: "FASİLƏ", ft: "BİTDİ" },
-        en: { brand: "PROSCORE ELITE", search: "Search matches...", allLeagues: "ALL LEAGUES", loading: "LOADING DATA", noMatch: "No matches found", error: "Error occurred", live: "LIVE", ht: "HT", ft: "FT" },
-        ru: { brand: "PROSCORE ELITE", search: "Поиск матчей...", allLeagues: "ВСЕ ЛИГИ", loading: "ЗАГРУЗКА ДАННЫХ", noMatch: "Матчи не найдены", error: "Ошибка сети", live: "LIVE", ht: "ПЕРЕРЫВ", ft: "ЗАВЕРШЕН" }
-    };
-
-    function setLang(lang) {
-        currentLang = lang;
-        localStorage.setItem('prefLang', lang);
-        updateInterface();
-    }
-
-    function updateInterface() {
-        document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.id === `btn-${currentLang}`));
-        document.getElementById('brandLogo').innerText = i18n[currentLang].brand;
-        document.getElementById('searchInput').placeholder = i18n[currentLang].search;
-        updateLeagueFilterList();
-        render();
-    }
-
-    function showLoader() {
-        return `<div class="loader-container"><div class="spinner">⚽</div><div style="color:var(--accent); font-size:12px; font-weight:800; letter-spacing:2px; margin-top:20px;">${i18n[currentLang].loading}</div></div>`;
-    }
-
-    // YENİLƏNMİŞ FETCH FUNKSİYASI
     async function fetchData() {
-        try {
-            if (matches.length === 0) document.getElementById("matchContainer").innerHTML = showLoader();
-            
-            // Linkin sonuna təsadüfi rəqəm əlavə edirik ki, brauzer köhnə məlumatı göstərməsin
-            const res = await fetch(`https://canli-neticeler.onrender.com/live-scores?t=${Date.now()}`);
-            
-            if (!res.ok) throw new Error();
-            matches = await res.json();
-            updateLeagueFilterList();
-            render();
-        } catch (e) {
-            document.getElementById("matchContainer").innerHTML = `<div class="loader-container" style="color:var(--red)">${i18n[currentLang].error}</div>`;
-        }
-    }
-
-    function updateLeagueFilterList() {
-        const select = document.getElementById("leagueFilter");
-        const currentVal = select.value || 'all';
-        const uniqueLeagues = [...new Set(matches.map(m => m.displayLeague))].sort();
-        let html = `<option value="all">${i18n[currentLang].allLeagues}</option>`;
-        uniqueLeagues.forEach(l => html += `<option value="${l}" ${l === currentVal ? 'selected' : ''}>${l}</option>`);
-        select.innerHTML = html;
-    }
-
-    function render() {
         const container = document.getElementById("matchContainer");
-        const search = document.getElementById("searchInput").value.toLowerCase();
-        const league = document.getElementById("leagueFilter").value;
+        try {
+            // Sənin Render linkin (sonuna vaxt əlavə edirik ki, keşləməsin)
+            const res = await fetch(`https://canli-neticeler.onrender.com/live-scores?t=${Date.now()}`);
+            const matches = await res.json();
 
-        const filtered = matches.filter(m => {
-            const matchTxt = (m.home + m.away + m.displayLeague).toLowerCase().includes(search);
-            const matchLg = league === "all" || m.displayLeague === league;
-            return matchTxt && matchLg;
-        });
+            if (matches.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding:50px; color:var(--muted)">Hazırda canlı oyun yoxdur.</div>`;
+                return;
+            }
 
-        if (filtered.length === 0 && matches.length > 0) {
-            container.innerHTML = `<div class="loader-container" style="color:var(--muted)">${i18n[currentLang].noMatch}</div>`;
-            return;
-        }
-
-        container.innerHTML = filtered.map(m => {
-            let statusText = m.minute;
-            let isLive = false;
-            if (statusText === "HT") statusText = i18n[currentLang].ht;
-            else if (statusText === "FT") statusText = i18n[currentLang].ft;
-            else if (statusText === "Live" || statusText.includes("'")) isLive = true;
-
-            return `
+            container.innerHTML = matches.map(m => `
                 <div class="match-card">
-                    <div class="league-header">
-                        <img src="https://api.sofascore.app/api/v1/tournament/${m.leagueId}/image" class="league-logo" onerror="this.style.display='none'">
-                        <span class="league-title">${m.displayLeague}</span>
-                    </div>
+                    <div style="text-align:center; font-size:11px; color:var(--accent); margin-bottom:10px; font-weight:bold">${m.displayLeague}</div>
                     <div class="match-body">
                         <div class="team-side">
-                            <img src="https://api.sofascore.app/api/v1/team/${m.homeId}/image" class="team-logo" loading="lazy">
-                            <div class="team-name">${m.home}</div>
+                            <img src="${m.homeLogo}" class="team-logo" onerror="this.src='https://via.placeholder.com/50?text=?'">
+                            <div style="font-weight:700; font-size:13px; text-align:center">${m.home}</div>
                         </div>
                         <div class="score-box">
-                            <div class="score"><span>${m.score.home}</span><span>-</span><span>${m.score.away}</span></div>
-                            <div class="minute-badge ${isLive ? 'live-bg' : ''}">${statusText}</div>
+                            <div class="score">${m.score.home} - ${m.score.away}</div>
+                            <div class="minute-badge ${m.minute === 'LIVE' ? 'live-bg' : ''}">${m.minute}</div>
                         </div>
                         <div class="team-side">
-                            <img src="https://api.sofascore.app/api/v1/team/${m.awayId}/image" class="team-logo" loading="lazy">
-                            <div class="team-name">${m.away}</div>
+                            <img src="${m.awayLogo}" class="team-logo" onerror="this.src='https://via.placeholder.com/50?text=?'">
+                            <div style="font-weight:700; font-size:13px; text-align:center">${m.away}</div>
                         </div>
                     </div>
-                    ${(m.homeGoals.length > 0 || m.awayGoals.length > 0) ? `
-                    <div class="goals-container">
-                        <div class="goal-list home-goals">
-                            ${m.homeGoals.map(g => `<span>⚽ ${g.name} ${g.time}'</span>`).join("")}
-                        </div>
-                        <div class="goal-list away-goals">
-                            ${m.awayGoals.map(g => `<span>${g.name} ${g.time}' ⚽</span>`).join("")}
-                        </div>
-                    </div>` : ''}
-                </div>`;
-        }).join("");
+                </div>
+            `).join("");
+        } catch (e) {
+            container.innerHTML = `<div style="text-align:center; color:var(--red)">Xəta baş verdi.</div>`;
+        }
     }
 
-    document.getElementById("searchInput").addEventListener("input", render);
-    document.getElementById("leagueFilter").addEventListener("change", render);
-    updateInterface();
     fetchData();
-    setInterval(fetchData, 30000);
+    setInterval(fetchData, 60000); // Hər dəqiqə yenilə
 </script>
 </body>
 </html>
