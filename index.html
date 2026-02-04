@@ -167,7 +167,7 @@
             if (matches.length === 0) document.getElementById("matchContainer").innerHTML = showLoader();
             
             // LOKALDA yoxlamaq üçün:
-            const res = await fetch("http://localhost:3000/live-scores");
+            const res = await fetch("https://canli-neticeler.onrender.com/live-scores");
             
             // RENDER-də yoxlamaq üçün (Yuxarıdakını silib bunu aç):
             // const res = await fetch("https://canli-neticeler.onrender.com/live-scores");
