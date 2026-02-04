@@ -1,41 +1,53 @@
 const express = require("express");
+const puppeteer = require("puppeteer");
 const cors = require("cors");
 const app = express();
 app.use(cors());
 
-const API_KEY = "a95f9a1f08ee4d72882ac761861be455"; 
-
-app.get("/", (req, res) => res.send("ProScore API Aktivdir!"));
-
 app.get("/live-scores", async (req, res) => {
+    let browser;
     try {
-        const response = await fetch("https://api.football-data.org/v4/matches", {
-            headers: { "X-Auth-Token": API_KEY }
+        // Gizli brauzeri başladırıq
+        browser = await puppeteer.launch({
+            args: ["--no-sandbox", "--disable-setuid-sandbox"]
         });
-        const data = await response.json();
+        const page = await browser.newPage();
         
-        if (!data.matches) return res.json([]);
+        // Livescore-un canlı oyunlar səhifəsinə gedirik
+        await page.goto("https://www.livescore.com/en/football/live/", {
+            waitUntil: "networkidle2"
+        });
 
-        const matches = data.matches.map(m => ({
-            id: m.id,
-            displayLeague: m.competition.name,
-            home: m.homeTeam.name,
-            homeLogo: m.homeTeam.crest,
-            away: m.awayTeam.name,
-            awayLogo: m.awayTeam.crest,
-            score: {
-                home: m.score.fullTime.home ?? 0,
-                away: m.score.fullTime.away ?? 0
-            },
-            minute: m.status === "IN_PLAY" ? "LIVE" : (m.status === "FINISHED" ? "FT" : "Soon"),
-            // Qol vuranlar API-dən asılıdır, hələlik strukturu hazır saxlayırıq
-            homeGoals: m.score.extraTime ? [{name: "Goal", time: ""}] : [], 
-            awayGoals: []
-        }));
+        // Saytdakı məlumatları seçib götürürük (Scraping)
+        const matches = await page.evaluate(() => {
+            const results = [];
+            const matchElements = document.querySelectorAll(".MatchRow_matchRowWrapper__2S69Z"); // Bu klasslar tez-tez dəyişir
+            
+            matchElements.forEach(el => {
+                const homeTeam = el.querySelector(".MatchRow_homeName__19Vf5")?.innerText;
+                const awayTeam = el.querySelector(".MatchRow_awayName__3fN4W")?.innerText;
+                const score = el.querySelector(".MatchRow_score__3-4-8")?.innerText;
+                const time = el.querySelector(".MatchRow_status__3-4-8")?.innerText;
 
+                if(homeTeam && awayTeam) {
+                    results.push({
+                        home: homeTeam,
+                        away: awayTeam,
+                        score: score,
+                        minute: time,
+                        displayLeague: "LiveScore Scraping"
+                    });
+                }
+            });
+            return results;
+        });
+
+        await browser.close();
         res.json(matches);
+
     } catch (err) {
-        res.json([]);
+        if (browser) await browser.close();
+        res.status(500).json({ error: "Livescore blokladı və ya xəta baş verdi" });
     }
 });
 
