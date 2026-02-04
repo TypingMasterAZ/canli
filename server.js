@@ -64,7 +64,26 @@ app.get("/live-scores", async (req, res) => {
                 awayGoals
             };
         }));
-        res.json(matches);
+       // Mövcud matches-in altına bunu əlavə et:
+const testOyunlar = [
+    {
+        league: "Test Liqası",
+        homeTeam: "Mənim Komandam",
+        awayTeam: "Rəqib Komanda",
+        score: "2 - 1",
+        status: "Canlı"
+    },
+    {
+        league: "Azərbaycan Premyer Liqası",
+        homeTeam: "Qarabağ",
+        awayTeam: "Neftçi",
+        score: "0 - 0",
+        status: "15'"
+    }
+];
+
+// Əsas matches yerinə testOyunlar göndəririk:
+res.json(testOyunlar);
     } catch (err) { res.json([]); }
 });
 
