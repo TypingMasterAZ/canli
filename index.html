@@ -3,135 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ProScore Elite | Live Results</title>
+    <title>ProScore Elite | Live</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #020617; --card: rgba(15, 23, 42, 0.85);
+            --bg: #020617; --card: rgba(15, 23, 42, 0.9);
             --red: #f43f5e; --text: #f8fafc;
             --muted: #94a3b8; --border: rgba(255, 255, 255, 0.08); --accent: #38bdf8;
         }
         body { margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); }
         header { background: rgba(2, 6, 23, 0.95); backdrop-filter: blur(12px); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--border); }
-        .filters { padding: 15px; max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
-        .search-box, .league-select { width: 100%; padding: 12px; border-radius: 14px; background: var(--card); border: 1px solid var(--border); color: #fff; outline: none; font-size: 14px; }
         .container { padding: 10px; max-width: 600px; margin: 0 auto; padding-bottom: 100px; }
-        .match-card { background: var(--card); border-radius: 24px; padding: 20px; margin-bottom: 16px; border: 1px solid var(--border); backdrop-filter: blur(8px); }
-        .league-title { text-align: center; font-size: 10px; color: var(--accent); margin-bottom: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
-        .match-body { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-        .team-side { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; }
-        .team-logo { width: 50px; height: 50px; object-fit: contain; background: rgba(255,255,255,0.05); border-radius: 14px; padding: 5px; }
-        .team-name { font-weight: 700; font-size: 13px; text-align: center; color: var(--text); }
-        .score-area { text-align: center; flex: 0 0 90px; }
-        .score { font-size: 30px; font-weight: 800; color: #fff; line-height: 1; margin-bottom: 5px; }
-        .minute-badge { font-size: 10px; padding: 4px 12px; border-radius: 20px; background: #000; color: #fff; font-weight: 700; }
-        .live-pulse { background: var(--red); box-shadow: 0 0 12px rgba(244, 63, 94, 0.4); animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
-        .goals-box { margin-top: 15px; padding-top: 12px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
-        .btn-refresh { background: var(--accent); color: #000; border: none; padding: 8px 16px; border-radius: 10px; font-weight: 700; cursor: pointer; }
+        .match-card { background: var(--card); border-radius: 20px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .match-body { display: flex; align-items: center; justify-content: space-between; }
+        .team-side { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; }
+        .team-logo { width: 45px; height: 45px; object-fit: contain; margin-bottom: 8px; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.5)); }
+        .team-name { font-weight: 700; font-size: 12px; color: var(--text); height: 35px; overflow: hidden; }
+        .score-area { flex: 0 0 80px; text-align: center; }
+        .score { font-size: 28px; font-weight: 800; color: #fff; margin-bottom: 5px; }
+        .minute { font-size: 10px; padding: 3px 10px; border-radius: 20px; background: var(--red); color: #fff; font-weight: 800; }
+        .league-name { text-align: center; font-size: 9px; color: var(--accent); text-transform: uppercase; margin-bottom: 10px; opacity: 0.8; }
+        .goals { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); display: flex; font-size: 10px; color: var(--muted); }
     </style>
 </head>
 <body>
 
 <header>
-    <h1 style="font-size:18px; font-weight:800; margin:0;">PROSCORE<span style="color:var(--accent)">.ELITE</span></h1>
-    <button class="btn-refresh" onclick="fetchData()">YENİLƏ</button>
+    <div style="font-weight: 800; font-size: 18px;">PRO<span style="color:var(--accent)">SCORE</span></div>
+    <button onclick="fetchData()" style="background:var(--accent); border:none; padding:5px 15px; border-radius:8px; font-weight:800; cursor:pointer">YENİLƏ</button>
 </header>
 
-<div class="filters">
-    <input type="text" id="searchInput" class="search-box" placeholder="Klub və ya liqa axtar...">
-    <select id="leagueFilter" class="league-select">
-        <option value="all">BÜTÜN LİQALAR</option>
-    </select>
-</div>
-
 <div class="container" id="matchContainer">
-    <div style="text-align:center; padding:50px; color:var(--muted)">Yüklənir...</div>
+    <div style="text-align:center; padding:50px;">Yüklənir...</div>
 </div>
 
 <script>
     const API_URL = "https://canli-neticeler.onrender.com";
-    let allMatches = [];
 
     async function fetchData() {
         try {
-            const res = await fetch(`${API_URL}/live-scores?t=${Date.now()}`);
-            allMatches = await res.json();
-            updateLeagueFilter();
-            renderMatches();
+            const res = await fetch(`${API_URL}/live-scores`);
+            const data = await res.json();
+            renderMatches(data);
         } catch (e) {
-            document.getElementById("matchContainer").innerHTML = `<div style="text-align:center; color:var(--red); padding:40px;">Xəta: Serverə qoşulmaq mümkün olmadı.</div>`;
+            document.getElementById("matchContainer").innerHTML = "Xəta baş verdi.";
         }
     }
 
-    function updateLeagueFilter() {
-        const select = document.getElementById("leagueFilter");
-        const currentVal = select.value;
-        const leagues = [...new Set(allMatches.map(m => m.league))];
-        let html = '<option value="all">BÜTÜN LİQALAR</option>';
-        leagues.sort().forEach(l => {
-            html += `<option value="${l}" ${currentVal === l ? 'selected' : ''}>${l}</option>`;
-        });
-        select.innerHTML = html;
-    }
-
-    function renderMatches() {
+    function renderMatches(matches) {
         const container = document.getElementById("matchContainer");
-        const searchTerm = document.getElementById("searchInput").value.toLowerCase();
-        const selectedLeague = document.getElementById("leagueFilter").value;
-
-        const filtered = allMatches.filter(m => {
-            const matchesSearch = m.home.toLowerCase().includes(searchTerm) || m.away.toLowerCase().includes(searchTerm) || m.league.toLowerCase().includes(searchTerm);
-            const matchesLeague = selectedLeague === "all" || m.league === selectedLeague;
-            return matchesSearch && matchesLeague;
-        });
-
-        if (filtered.length === 0) {
-            container.innerHTML = `<div style="text-align:center; padding:50px; color:var(--muted)">Canlı oyun tapılmadı.</div>`;
+        if (!matches || matches.length === 0) {
+            container.innerHTML = "<div style='text-align:center'>Oyun tapılmadı.</div>";
             return;
         }
 
-        container.innerHTML = filtered.map(m => {
-            // Serverdəki yeni Proxy-dən AD ilə loqo çəkirik
-            const homeLogo = `${API_URL}/proxy-logo?name=${encodeURIComponent(m.home)}`;
-            const awayLogo = `${API_URL}/proxy-logo?name=${encodeURIComponent(m.away)}`;
+        container.innerHTML = matches.map(m => {
+            // Təmizlənmiş komanda adı (Loqo axtarışı üçün)
+            const cleanName = (name) => name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
             
-            // Loqo tapılmayanda çıxan estetik hərflər
-            const fallback = (name) => `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=1e293b&color=38bdf8&bold=true&rounded=true`;
+            // 1. GitHub Arxiv Loqosu
+            const logo1 = `https://raw.githubusercontent.com/lucasbento/football-logos/master/logos/teams/${m.home.replace(/\s/g, '%20')}/logo.png`;
+            const logo2 = `https://raw.githubusercontent.com/lucasbento/football-logos/master/logos/teams/${m.away.replace(/\s/g, '%20')}/logo.png`;
+            
+            // Fallback (Hərflər)
+            const fb = (n) => `https://ui-avatars.com/api/?name=${encodeURIComponent(n)}&background=1e293b&color=38bdf8&bold=true`;
 
             return `
                 <div class="match-card">
-                    <div class="league-title">${m.league}</div>
+                    <div class="league-name">${m.league}</div>
                     <div class="match-body">
                         <div class="team-side">
-                            <img src="${homeLogo}" class="team-logo" onerror="this.onerror=null; this.src='${fallback(m.home)}';">
+                            <img src="${logo1}" class="team-logo" 
+                                 onerror="this.onerror=null; this.src='https://www.thesportsdb.com/images/media/team/badge/small/${encodeURIComponent(m.home)}.png'; this.onerror=function(){this.src='${fb(m.home)}'};">
                             <div class="team-name">${m.home}</div>
                         </div>
                         <div class="score-area">
                             <div class="score">${m.score.home} - ${m.score.away}</div>
-                            <div class="minute-badge ${m.minute !== 'FT' ? 'live-pulse' : ''}">${m.minute}</div>
+                            <div class="minute">${m.minute}</div>
                         </div>
                         <div class="team-side">
-                            <img src="${awayLogo}" class="team-logo" onerror="this.onerror=null; this.src='${fallback(m.away)}';">
+                            <img src="${logo2}" class="team-logo" 
+                                 onerror="this.onerror=null; this.src='https://www.thesportsdb.com/images/media/team/badge/small/${encodeURIComponent(m.away)}.png'; this.onerror=function(){this.src='${fb(m.away)}'};">
                             <div class="team-name">${m.away}</div>
                         </div>
                     </div>
                     ${m.scorers && m.scorers.length > 0 ? `
-                    <div class="goals-box">
-                        <div style="flex:1">
-                            ${m.scorers.filter(s => s.side === 1).map(s => `<div>⚽ ${s.name} ${s.time}'</div>`).join("")}
+                        <div class="goals">
+                            <div style="flex:1">${m.scorers.filter(s => s.side === 1).map(s => `⚽ ${s.name} ${s.time}'`).join("<br>")}</div>
+                            <div style="flex:1; text-align:right">${m.scorers.filter(s => s.side === 2).map(s => `${s.name} ${s.time}' ⚽`).join("<br>")}</div>
                         </div>
-                        <div style="flex:1; text-align:right">
-                            ${m.scorers.filter(s => s.side === 2).map(s => `<div>${s.name} ${s.time}' ⚽</div>`).join("")}
-                        </div>
-                    </div>` : ''}
+                    ` : ''}
                 </div>
             `;
         }).join("");
     }
-
-    document.getElementById("searchInput").addEventListener("input", renderMatches);
-    document.getElementById("leagueFilter").addEventListener("change", renderMatches);
 
     fetchData();
     setInterval(fetchData, 45000);
