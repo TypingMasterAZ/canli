@@ -21,7 +21,7 @@ app.get("/", (req, res) => {
 
 app.get("/live-scores", async (req, res) => {
     try {
-        const response = await fetch("https://api.sofascore.com/api/v1/sport/football/events/live", { 
+        const response = await fetch("https://api.sofascore.com/api/v1/sport/football/events/scheduled/2026-02-04", { 
             headers: HEADERS,
             cache: 'no-store'
         });
