@@ -1,31 +1,37 @@
 const express = require("express");
 const cors = require("cors");
 const app = express();
+
 app.use(cors());
 
-// Sofascore bloklamasının qarşısını almaq üçün real brauzer başlıqları
 const HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-    "Accept": "*/*",
+    "Accept": "application/json",
     "Accept-Language": "az-AZ,az;q=0.9,en-US;q=0.8,en;q=0.7",
-    "Origin": "https://www.sofascore.com",
+    "Cache-Control": "no-cache",
+    "Pragma": "no-cache",
     "Referer": "https://www.sofascore.com/",
-    "Cache-Control": "no-cache"
+    "Origin": "https://www.sofascore.com"
 };
+
+// Render-dəki "GET işlemi yapılamıyor /" xətasını həll etmək üçün:
+app.get("/", (req, res) => {
+    res.send("Server aktivdir! Məlumatlar üçün /live-scores ünvanına gedin.");
+});
 
 app.get("/live-scores", async (req, res) => {
     try {
-        const response = await fetch("https://api.sofascore.com/api/v1/sport/football/events/live", { headers: HEADERS });
+        const response = await fetch("https://api.sofascore.com/api/v1/sport/football/events/live", { 
+            headers: HEADERS,
+            cache: 'no-store'
+        });
         const data = await response.json();
         
-        if (!data || !data.events || data.events.length === 0) {
-            return res.json([]); 
-        }
+        if (!data || !data.events) return res.json([]);
 
         const matches = await Promise.all(data.events.slice(0, 50).map(async (event) => {
             let homeGoals = [], awayGoals = [];
             
-            // Qol atanları çəkmək üçün (istəyə bağlı)
             try {
                 const incRes = await fetch(`https://api.sofascore.com/api/v1/event/${event.id}/incidents`, { headers: HEADERS });
                 const incData = await incRes.json();
@@ -33,31 +39,24 @@ app.get("/live-scores", async (req, res) => {
                     incData.incidents.forEach(inc => {
                         if (inc.incidentType === "goal") {
                             const playerName = inc.player ? inc.player.name : (inc.playerName || "Goal");
-                            const goalInfo = { name: playerName, time: inc.time };
-                            if (inc.isHome) homeGoals.push(goalInfo);
-                            else awayGoals.push(goalInfo);
+                            if (inc.isHome) homeGoals.push({ name: playerName, time: inc.time });
+                            else awayGoals.push({ name: playerName, time: inc.time });
                         }
                     });
                 }
             } catch (e) {}
 
-            // Dəqiqə hesablanması
             let minute = "";
-            const status = event.status.type;
-            const desc = event.status.description;
-
-            if (status === "finished") minute = "FT";
-            else if (desc === "Halftime") minute = "HT";
-            else if (status === "inprogress") {
-                if (event.status.clock?.current !== undefined) {
-                    minute = Math.floor(event.status.clock.current / 60) + "'";
-                } else minute = "Live";
-            } else minute = desc || "Soon";
+            if (event.status.type === "finished") minute = "FT";
+            else if (event.status.description === "Halftime") minute = "HT";
+            else if (event.status.type === "inprogress") {
+                minute = event.status.clock?.current !== undefined ? Math.floor(event.status.clock.current / 60) + "'" : "Live";
+            } else minute = event.status.description || "Soon";
 
             return {
                 id: event.id,
-                displayLeague: `${event.tournament?.category?.name || "Other"}: ${event.tournament?.name}`,
-                leagueId: event.tournament?.uniqueTournament?.id || event.tournament?.id || 0,
+                displayLeague: `${event.tournament?.category?.name}: ${event.tournament?.name}`,
+                leagueId: event.tournament?.uniqueTournament?.id || 0,
                 home: event.homeTeam.name,
                 homeId: event.homeTeam.id,
                 away: event.awayTeam.name,
@@ -73,14 +72,10 @@ app.get("/live-scores", async (req, res) => {
         }));
 
         res.json(matches);
-
-    } catch (err) { 
-        console.error("Xəta:", err.message);
-        res.json([]); 
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 
-const PORT = process.env.PORT || 3000; 
-app.listen(PORT, "0.0.0.0", () => {
-    console.log(`🚀 Server ${PORT} portunda aktivdir!`);
-});
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, "0.0.0.0", () => console.log(`🚀 Port: ${PORT}`));

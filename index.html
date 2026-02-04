@@ -171,12 +171,13 @@
         return `<div class="loader-container"><div class="spinner">⚽</div><div style="color:var(--accent); font-size:12px; font-weight:800; letter-spacing:2px; margin-top:20px;">${i18n[currentLang].loading}</div></div>`;
     }
 
+    // YENİLƏNMİŞ FETCH FUNKSİYASI
     async function fetchData() {
         try {
             if (matches.length === 0) document.getElementById("matchContainer").innerHTML = showLoader();
             
-            // Render linki (artıq localhost deyil)
-            const res = await fetch("https://canli-neticeler.onrender.com/live-scores");
+            // Linkin sonuna təsadüfi rəqəm əlavə edirik ki, brauzer köhnə məlumatı göstərməsin
+            const res = await fetch(`https://canli-neticeler.onrender.com/live-scores?t=${Date.now()}`);
             
             if (!res.ok) throw new Error();
             matches = await res.json();
