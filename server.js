@@ -13,29 +13,32 @@ app.get("/live-scores", async (req, res) => {
         let allMatches = [];
         data.Stages.forEach(stage => {
             stage.Events.forEach(event => {
-                // Qolları daha dəqiq süzmək üçün
-                const goals = event.Incs ? event.Incs.filter(i => i.InType === "Goal") : [];
-                
+                // Qolları tapmaq üçün daha dəqiq filtr
+                let scorersList = [];
+                if (event.Incs) {
+                    scorersList = event.Incs
+                        .filter(i => i.InType === "Goal")
+                        .map(i => ({
+                            name: i.Pn,
+                            time: i.Min,
+                            side: i.ScSide // 1: Ev, 2: Qonaq
+                        }));
+                }
+
                 allMatches.push({
                     id: event.Eid,
                     displayLeague: `${stage.Cnm}: ${stage.Snm}`,
                     home: event.T1[0].Nm,
-                    homeId: event.T1[0].ID,
-                    // Sofascore loqo bazasına keçid (daha stabil)
-                    homeLogo: `https://api.sofascore.app/api/v1/team/${event.T1[0].ID}/image`,
                     away: event.T2[0].Nm,
-                    awayId: event.T2[0].ID,
-                    awayLogo: `https://api.sofascore.app/api/v1/team/${event.T2[0].ID}/image`,
+                    // Livescore-un öz loqo serveri
+                    homeLogo: `https://static.livescore.com/content/team/v2/img/${event.T1[0].Img}`,
+                    awayLogo: `https://static.livescore.com/content/team/v2/img/${event.T2[0].Img}`,
                     score: {
                         home: event.Tr1 || 0,
                         away: event.Tr2 || 0
                     },
                     minute: event.Eps, 
-                    scorers: goals.map(i => ({
-                        name: i.Pn,
-                        time: i.Min,
-                        side: i.ScSide // 1: Ev, 2: Qonaq
-                    }))
+                    scorers: scorersList
                 });
             });
         });
