@@ -58,8 +58,9 @@
         list.innerHTML = events.map(event => {
             const homeId = event.homeTeam.id;
             const awayId = event.awayTeam.id;
-            const homeLogo = `https://api.sofascore.app/api/v1/team/${homeId}/image`;
-            const awayLogo = `https://api.sofascore.app/api/v1/team/${awayId}/image`;
+            // Köhnə sətirləri bunlarla dəyiş:
+const homeLogo = `https://www.sofascore.com/api/v1/team/${homeId}/image`;
+const awayLogo = `https://www.sofascore.com/api/v1/team/${awayId}/image`;
             const fb = (n) => `https://ui-avatars.com/api/?name=${encodeURIComponent(n)}&background=1e293b&color=38bdf8&bold=true`;
 
             return `
