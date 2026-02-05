@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ProScore Elite | Canlı Nəticələr</title>
+    <title>ProScore Elite | Canlı</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #020617; --card: #0f172a; --accent: #38bdf8; --red: #f43f5e; --text: #f8fafc; }
@@ -11,7 +11,7 @@
         header { padding: 15px 20px; background: rgba(15, 23, 42, 0.9); border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
         .container { padding: 15px; max-width: 500px; margin: 0 auto; }
         .match-card { background: var(--card); border-radius: 20px; padding: 18px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.05); }
-        .league-name { font-size: 10px; color: var(--accent); text-align: center; margin-bottom: 12px; font-weight: 800; text-transform: uppercase; opacity: 0.8; }
+        .league-name { font-size: 10px; color: var(--accent); text-align: center; margin-bottom: 12px; font-weight: 800; text-transform: uppercase; }
         .match-body { display: flex; align-items: center; justify-content: space-between; }
         .team { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; }
         .logo-box { width: 50px; height: 50px; background: #fff; border-radius: 12px; padding: 6px; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; }
@@ -35,19 +35,21 @@
 </div>
 
 <script>
+    // Bura Google Apps Script-dən aldığın URL-i yapışdır
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwv8OJOgemLoVsSWnmURIFgqtoHZBMJPT3s3b5QkNYSG9C3So3mThJjAjMFfCQa6Qqf/exec"; 
+
     async function fetchData() {
         try {
-            // Öz serverimizdəki /live-scores endpoint-inə müraciət edirik
-            const response = await fetch("/live-scores");
-            const events = await response.json();
+            const response = await fetch(GOOGLE_SCRIPT_URL);
+            const data = await response.json();
             
-            if (Array.isArray(events) && events.length > 0) {
-                render(events);
+            if (data && data.events && data.events.length > 0) {
+                render(data.events);
             } else {
                 document.getElementById("matchList").innerHTML = "<div style='text-align:center; padding:100px; opacity:0.5;'>Hazırda canlı oyun yoxdur.</div>";
             }
         } catch (e) {
-            document.getElementById("matchList").innerHTML = "<div style='text-align:center; padding:50px;'>Məlumat alınarkən xəta baş verdi.</div>";
+            document.getElementById("matchList").innerHTML = "<div style='text-align:center; padding:50px;'>Google Script xətası! Linki düzgün qoyduğunuzdan əmin olun.</div>";
         }
     }
 
@@ -65,9 +67,7 @@
                     <div class="league-name">${event.tournament.name}</div>
                     <div class="match-body">
                         <div class="team">
-                            <div class="logo-box">
-                                <img src="${homeLogo}" class="team-logo" onerror="this.src='${fb(event.homeTeam.name)}';">
-                            </div>
+                            <div class="logo-box"><img src="${homeLogo}" class="team-logo" onerror="this.src='${fb(event.homeTeam.name)}';"></div>
                             <div class="team-name">${event.homeTeam.shortName || event.homeTeam.name}</div>
                         </div>
                         <div class="score-box">
@@ -75,14 +75,11 @@
                             <div class="minute">${event.status.description === 'Live' ? (event.lastPeriod || '') + "'" : event.status.description}</div>
                         </div>
                         <div class="team">
-                            <div class="logo-box">
-                                <img src="${awayLogo}" class="team-logo" onerror="this.src='${fb(event.awayTeam.name)}';">
-                            </div>
+                            <div class="logo-box"><img src="${awayLogo}" class="team-logo" onerror="this.src='${fb(event.awayTeam.name)}';"></div>
                             <div class="team-name">${event.awayTeam.shortName || event.awayTeam.name}</div>
                         </div>
                     </div>
-                </div>
-            `;
+                </div>`;
         }).join("");
     }
 
