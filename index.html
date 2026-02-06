@@ -236,7 +236,103 @@
 </div>
 
 <script>
-  <!-- SCRIPTI BURAYA EYNİ CÜR YAPIŞDIR (DƏYİŞMƏ) -->
+  const G_URL = "https://script.google.com/macros/s/AKfycbxQV1itjk_W7qC7b3yniMt84-HPrufktquS1x2zpDb_fFb81hYdq1bAmhWsxhPNjleg/exec"; 
+    let events = [];
+
+    async function fetchData() {
+        try {
+            const res = await fetch(G_URL);
+            const data = await res.json();
+            events = data.events || [];
+            render(events);
+        } catch (e) { console.error(e); }
+    }
+
+    function render(data) {
+        const list = document.getElementById("matchList");
+        const grouped = data.reduce((acc, ev) => {
+            const l = ev.tournament.name;
+            if (!acc[l]) acc[l] = { id: ev.tournament.id, matches: [] };
+            acc[l].matches.push(ev);
+            return acc;
+        }, {});
+
+        let html = "";
+        for (const league in grouped) {
+            html += `
+                <div class="league-group">
+                    <div class="league-header">
+                        <img src="https://www.sofascore.com/api/v1/tournament/${grouped[league].id}/image">
+                        <span class="league-title">${league}</span>
+                    </div>
+                    ${grouped[league].matches.map(m => `
+                        <div class="match-card" onclick="openMatch('${m.id}', '${m.homeTeam.id}', '${m.awayTeam.id}', '${m.homeTeam.name}', '${m.awayTeam.name}', '${m.homeScore.current}:${m.awayScore.current}', '${m.status.description}', '${league}')">
+                            <div class="time-col">${m.status.description.includes("'") ? m.status.description : 'LIVE'}</div>
+                            <div class="teams-col">
+                                <div class="team-line">
+                                    <div class="team-info"><img class="team-logo" src="https://www.sofascore.com/api/v1/team/${m.homeTeam.id}/image"><span>${m.homeTeam.name}</span></div>
+                                    <span class="score-val">${m.homeScore.current}</span>
+                                </div>
+                                <div class="team-line">
+                                    <div class="team-info"><img class="team-logo" src="https://www.sofascore.com/api/v1/team/${m.awayTeam.id}/image"><span>${m.awayTeam.name}</span></div>
+                                    <span class="score-val">${m.awayScore.current}</span>
+                                </div>
+                            </div>
+                        </div>`).join("")}
+                </div>`;
+        }
+        list.innerHTML = html || "<center>Canlı oyun yoxdur</center>";
+    }
+
+    async function openMatch(id, idH, idA, nameH, nameA, score, time, league) {
+        document.getElementById("detailsModal").style.display = "block";
+        document.getElementById("logoH").src = `https://www.sofascore.com/api/v1/team/${idH}/image`;
+        document.getElementById("logoA").src = `https://www.sofascore.com/api/v1/team/${idA}/image`;
+        document.getElementById("nameH").innerText = nameH;
+        document.getElementById("nameA").innerText = nameA;
+        document.getElementById("scoreM").innerText = score;
+        document.getElementById("timeM").innerText = time;
+        document.getElementById("leagueM").innerText = league;
+        
+        document.getElementById("goalsBox").innerHTML = "<center style='opacity:0.5'>Hadisələr yüklənir...</center>";
+        document.getElementById("statsBox").innerHTML = "";
+
+        try {
+            const resI = await fetch(`${G_URL}?type=incidents&matchId=${id}`);
+            const dataI = await resI.json();
+            const goals = (dataI.incidents || []).filter(i => i.incidentType === "goal");
+            
+            let gHtml = "<h4 style='margin-top:0; font-size:12px; color:#888;'>QOLLAR</h4>";
+            goals.forEach(g => {
+                gHtml += `
+                    <div class="incident-row">
+                        <div class="inc-home">${g.isHome ? `<span class="goal-name">${g.player ? g.player.name : 'Qol'}</span> <span class="inc-time">${g.time}'</span> ⚽` : ''}</div>
+                        <div class="inc-away">${!g.isHome ? `⚽ <span class="inc-time">${g.time}'</span> <span class="goal-name">${g.player ? g.player.name : 'Qol'}</span>` : ''}</div>
+                    </div>`;
+            });
+            document.getElementById("goalsBox").innerHTML = goals.length ? gHtml : "<center style='opacity:0.5'>Hələ qol vurulmayıb</center>";
+
+            const resS = await fetch(`${G_URL}?type=statistics&matchId=${id}`);
+            const dataS = await resS.json();
+            if (dataS.statistics && dataS.statistics[0]) {
+                let sHtml = "<h4 style='font-size:12px; color:#888;'>STATİSTİKA</h4>";
+                dataS.statistics[0].groups.flatMap(g => g.statisticsItems).forEach(st => {
+                    const hV = parseFloat(st.home), aV = parseFloat(st.away);
+                    const hP = (hV / (hV + aV)) * 100;
+                    sHtml += `
+                        <div class="stat-row">
+                            <div class="stat-labels"><span>${st.home}</span><span>${st.name}</span><span>${st.away}</span></div>
+                            <div class="stat-bar-bg"><div class="stat-bar-home" style="width:${hP}%"></div><div class="stat-bar-away" style="width:${100-hP}%"></div></div>
+                        </div>`;
+                });
+                document.getElementById("statsBox").innerHTML = sHtml;
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    function closeModal() { document.getElementById("detailsModal").style.display = "none"; }
+    fetchData();
+    setInterval(fetchData, 30000);
 </script>
 
 </body>
