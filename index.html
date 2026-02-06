@@ -1,242 +1,364 @@
 <!DOCTYPE html>
 <html lang="az">
 <head>
-  <meta charset="UTF-8" />
-  <title>Canlı Oyunlar</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    <title>ProScore Elite | Live Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+  --bg: #0a0f1f;
+  --surface: #0f172a;
+  --card: #111c36;
+  --primary: #2563eb;
+  --accent: #38bdf8;
+  --danger: #ef4444;
+  --text: #e5e7eb;
+  --muted: #94a3b8;
+  --border: rgba(255,255,255,0.06);
+}
 
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+/* RESET */
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
 
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, sans-serif;
+  background: radial-gradient(circle at top, #0f172a, #020617);
+  color: var(--text);
+}
 
-    body {
-      font-family: Inter, Arial, sans-serif;
-      background: #0f172a;
-      color: #fff;
-      overflow-x: hidden;
-    }
+/* HEADER */
+header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: rgba(2,6,23,0.85);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
+}
 
-    /* HEADER */
-    header {
-      background: linear-gradient(135deg, #2563eb, #1e40af);
-      padding: 18px;
-    }
+.header-content {
+  max-width: 640px;
+  margin: auto;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
 
-    .header-content {
-      max-width: 1200px;
-      margin: auto;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+.header-content button {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #fff;
+  border: none;
+  padding: 7px 18px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
 
-    header h1 {
-      font-size: 22px;
-      font-weight: 700;
-    }
+/* CONTAINER */
+.container {
+  max-width: 640px;
+  margin: auto;
+  padding: 16px;
+}
 
-    header input {
-      padding: 10px 14px;
-      border-radius: 8px;
-      border: none;
-      outline: none;
-      font-size: 14px;
-      width: 220px;
-    }
+/* LEAGUE GROUP */
+.league-group {
+  margin-top: 20px;
+  background: var(--card);
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
 
-    /* MATCH LIST */
-    main {
-      max-width: 1200px;
-      margin: 20px auto;
-      padding: 0 14px;
-    }
+.league-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: linear-gradient(
+    90deg,
+    rgba(37,99,235,0.18),
+    transparent
+  );
+}
 
-    #matchList {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 16px;
-    }
+.league-header img {
+  width: 20px;
+  height: 20px;
+}
 
-    .match-card {
-      background: #020617;
-      border-radius: 14px;
-      padding: 14px;
-      cursor: pointer;
-      transition: transform .2s, box-shadow .2s;
-    }
+.league-title {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--muted);
+}
 
-    .match-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 10px 30px rgba(0,0,0,.4);
-    }
+/* MATCH CARD */
+.match-card {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 12px;
+  padding: 14px 16px;
+  position: relative;
+  cursor: pointer;
+  transition: background .2s ease;
+}
 
-    .teams {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+.match-card:not(:last-child) {
+  border-bottom: 1px solid var(--border);
+}
 
-    .team {
-      width: 40%;
-      text-align: center;
-    }
+.match-card:hover {
+  background: rgba(255,255,255,0.03);
+}
 
-    .team img {
-      width: 46px;
-      height: 46px;
-      object-fit: contain;
-      margin-bottom: 6px;
-    }
+.match-card::after {
+  content: "›";
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 26px;
+  color: var(--muted);
+}
 
-    .team-name {
-      font-size: 13px;
-      font-weight: 600;
-    }
+/* TIME */
+.time-col {
+  font-size: 11px;
+  font-weight: 900;
+  color: var(--danger);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-    .score {
-      font-size: 22px;
-      font-weight: 700;
-    }
+/* TEAMS */
+.teams-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 28px;
+}
 
-    .meta {
-      margin-top: 10px;
-      display: flex;
-      justify-content: space-between;
-      font-size: 12px;
-      opacity: .8;
-    }
+.team-line {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+}
 
-    /* MODAL */
-    #detailsModal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.75);
-      z-index: 1000;
-      overflow-y: auto;
-    }
+.team-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 
-    .modal-box {
-      background: #020617;
-      max-width: 900px;
-      margin: 40px auto;
-      border-radius: 18px;
-      padding: 20px;
-    }
+.team-logo {
+  width: 22px;
+  height: 22px;
+  background: #fff;
+  padding: 3px;
+  border-radius: 6px;
+}
 
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+.team-name {
+  font-size: 13px;
+  font-weight: 600;
+}
 
-    .close-btn {
-      font-size: 26px;
-      cursor: pointer;
-    }
+.score-val {
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--accent);
+}
 
-    .modal-teams {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin: 20px 0;
-    }
+/* MODAL */
+#detailsModal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(180deg, #020617, #020617);
+  z-index: 2000;
+  overflow-y: auto;
+}
 
-    .modal-team {
-      width: 40%;
-      text-align: center;
-    }
+/* MODAL HEADER */
+.modal-header {
+  padding: 32px 16px 24px;
+  text-align: center;
+  background: radial-gradient(
+    circle at top,
+    rgba(37,99,235,0.35),
+    transparent 65%
+  );
+}
 
-    .modal-team img {
-      width: 70px;
-      height: 70px;
-      object-fit: contain;
-      margin-bottom: 8px;
-    }
+.close-btn {
+  position: absolute;
+  left: 16px;
+  top: 16px;
+  font-size: 34px;
+  color: var(--muted);
+}
 
-    .modal-score {
-      font-size: 32px;
-      font-weight: 700;
-    }
+/* SCORE AREA */
+.modal-score-area {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+  margin-top: 28px;
+}
 
-    .section {
-      margin-top: 20px;
-      background: #020617;
-      border-radius: 14px;
-      padding: 14px;
-    }
+.modal-team {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
 
-    .section h3 {
-      margin-bottom: 10px;
-      font-size: 16px;
-    }
+.modal-team img {
+  width: 56px;
+  height: 56px;
+  background: #fff;
+  padding: 6px;
+  border-radius: 14px;
+}
 
-    /* SCROLL BLOK */
-    body:has(#detailsModal[style*="block"]) {
-      overflow: hidden;
-    }
-  </style>
+.modal-team span {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.modal-score-big {
+  font-size: 44px;
+  font-weight: 900;
+  min-width: 120px;
+}
+
+/* INCIDENTS */
+.incident-container {
+  padding: 24px 16px;
+}
+
+.incident-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.inc-home {
+  text-align: right;
+  padding-right: 12px;
+}
+
+.inc-away {
+  text-align: left;
+  padding-left: 12px;
+}
+
+.inc-time {
+  font-weight: 800;
+  color: var(--danger);
+}
+
+.goal-name {
+  font-weight: 600;
+}
+
+/* STATS */
+.stat-section {
+  padding: 24px 16px 40px;
+}
+
+.stat-row {
+  margin-bottom: 20px;
+}
+
+.stat-labels {
+  display: grid;
+  grid-template-columns: 40px 1fr 40px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.stat-labels span:nth-child(1) {
+  text-align: left;
+}
+
+.stat-labels span:nth-child(2) {
+  text-align: center;
+}
+
+.stat-labels span:nth-child(3) {
+  text-align: right;
+}
+
+.stat-bar-bg {
+  height: 7px;
+  background: #020617;
+  border-radius: 999px;
+  overflow: hidden;
+  display: flex;
+}
+
+.stat-bar-home {
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+}
+
+.stat-bar-away {
+  background: linear-gradient(90deg, #f97316, #fb7185);
+}
+
+    </style>
 </head>
-
 <body>
 
 <header>
-  <div class="header-content">
-    <h1>⚽ Canlı Oyunlar</h1>
-    <input id="searchInput" type="text" placeholder="Komanda axtar..." />
-  </div>
+    <div class="header-content">
+        <div style="font-size: 18px; font-weight: 800;">PRO<span style="color:#64b5f6">SCORE</span></div>
+        <button onclick="fetchData()" style="background:rgba(255,255,255,0.2); color:white; border:none; padding:6px 15px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">YENİLƏ</button>
+    </div>
 </header>
 
-<main>
-  <div id="matchList"></div>
-</main>
+<div class="container" id="matchList">
+    <div style="text-align:center; padding:100px; opacity:0.3;">Oyunlar yüklənir...</div>
+</div>
 
-<!-- MODAL -->
 <div id="detailsModal">
-  <div class="modal-box">
-
     <div class="modal-header">
-      <div>
-        <div id="leagueM"></div>
-        <div id="timeM"></div>
-      </div>
-      <span class="close-btn" onclick="closeModal()">×</span>
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <div id="leagueM" style="font-size:10px; opacity:0.7; text-transform:uppercase; letter-spacing:1px;"></div>
+        <div class="modal-score-area">
+            <div class="modal-team">
+                <img id="logoH" src="">
+                <span id="nameH"></span>
+            </div>
+            <div class="modal-score-big" id="scoreM">0 - 0</div>
+            <div class="modal-team">
+                <img id="logoA" src="">
+                <span id="nameA"></span>
+            </div>
+        </div>
+        <div id="timeM" style="margin-top:15px; font-weight:800; color:#4caf50; background:rgba(255,255,255,0.1); display:inline-block; padding:3px 12px; border-radius:20px; font-size:12px;"></div>
     </div>
-
-    <div class="modal-teams">
-      <div class="modal-team">
-        <img id="logoH" src="" alt="">
-        <div id="nameH"></div>
-      </div>
-
-      <div class="modal-score" id="scoreM"></div>
-
-      <div class="modal-team">
-        <img id="logoA" src="" alt="">
-        <div id="nameA"></div>
-      </div>
-    </div>
-
-    <div class="section">
-      <h3>⚽ Qollar</h3>
-      <div id="goalsBox"></div>
-    </div>
-
-    <div class="section">
-      <h3>📊 Statistika</h3>
-      <div id="statsBox"></div>
-    </div>
-
-  </div>
+    
+    <div class="incident-container" id="goalsBox"></div>
+    <div class="stat-section" id="statsBox"></div>
 </div>
 
 <script>
-  const G_URL = "https://script.google.com/macros/s/AKfycbxQV1itjk_W7qC7b3yniMt84-HPrufktquS1x2zpDb_fFb81hYdq1bAmhWsxhPNjleg/exec"; 
+    const G_URL = "https://script.google.com/macros/s/AKfycbxQV1itjk_W7qC7b3yniMt84-HPrufktquS1x2zpDb_fFb81hYdq1bAmhWsxhPNjleg/exec"; 
     let events = [];
 
     async function fetchData() {
@@ -334,6 +456,5 @@
     fetchData();
     setInterval(fetchData, 30000);
 </script>
-
 </body>
 </html>
