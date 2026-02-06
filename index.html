@@ -5,90 +5,144 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="referrer" content="no-referrer">
     <title>ProScore Elite | Live</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #020617; --card: #0f172a; --accent: #38bdf8; --red: #f43f5e; --text: #f8fafc; }
-        body { margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
-        header { padding: 15px 20px; background: rgba(15, 23, 42, 0.9); border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
-        .container { padding: 15px; max-width: 500px; margin: 0 auto; }
-        .match-card { background: var(--card); border-radius: 20px; padding: 18px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.05); cursor: pointer; position: relative; transition: 0.3s; }
-        .match-card:active { transform: scale(0.98); }
-        .league-name { font-size: 10px; color: var(--accent); text-align: center; margin-bottom: 12px; font-weight: 800; text-transform: uppercase; }
-        .match-body { display: flex; align-items: center; justify-content: space-between; }
-        .team { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; }
-        .logo-box { width: 50px; height: 50px; background: #fff; border-radius: 12px; padding: 6px; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; }
-        .team-logo { width: 100%; height: 100%; object-fit: contain; }
-        .score-box { text-align: center; flex: 0 0 90px; }
-        .score { font-size: 30px; font-weight: 800; line-height: 1; }
-        .minute { font-size: 11px; color: var(--red); font-weight: 800; margin-top: 5px; }
-        .team-name { font-size: 12px; font-weight: 700; height: 32px; display: flex; align-items: center; }
+        :root { --bg: #020617; --card: #0f172a; --accent: #38bdf8; --red: #f43f5e; --text: #f8fafc; --gray: #94a3b8; }
+        body { margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); }
         
-        /* Modal (Detallar) */
-        #matchModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(2,6,23,0.98); z-index:1000; overflow-y:auto; padding:20px; box-sizing:border-box; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .modal-header { text-align:center; margin-bottom:30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px; }
-        .incident-row { display:flex; align-items:center; margin:15px 0; padding:10px; border-radius:12px; background: rgba(255,255,255,0.03); }
-        .goal-icon { margin-right: 10px; }
-        .btn-refresh { background: var(--accent); border: none; padding: 8px 16px; border-radius: 10px; font-weight: 800; cursor: pointer; color: #000; }
+        header { 
+            padding: 15px 20px; background: rgba(15, 23, 42, 0.8); border-bottom: 1px solid rgba(255,255,255,0.05); 
+            display: flex; flex-direction: column; gap: 15px; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(15px); 
+        }
+        .header-top { display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Filtr Dizaynı */
+        .search-box {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px; padding: 10px 15px; color: white; width: 100%; box-sizing: border-box; outline: none; transition: 0.3s;
+        }
+        .search-box:focus { border-color: var(--accent); background: rgba(255,255,255,0.08); }
+
+        .container { padding: 15px; max-width: 500px; margin: 0 auto; }
+        
+        /* Match Card Yeniləndi */
+        .match-card { 
+            background: var(--card); border-radius: 24px; padding: 20px; margin-bottom: 15px; 
+            border: 1px solid rgba(255,255,255,0.05); cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative; overflow: hidden;
+        }
+        .match-card:hover { transform: translateY(-3px); border-color: rgba(56, 189, 248, 0.3); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5); }
+        
+        /* İçəri yol işarəsi */
+        .match-card::after {
+            content: '→'; position: absolute; right: 15px; top: 50%; transform: translateY(-50%);
+            color: var(--accent); opacity: 0.3; font-size: 20px; transition: 0.3s;
+        }
+        .match-card:hover::after { opacity: 1; right: 10px; }
+
+        .league-name { font-size: 10px; color: var(--gray); text-align: center; margin-bottom: 15px; font-weight: 700; letter-spacing: 1px; }
+        .match-body { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        
+        .team { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; }
+        .logo-box { width: 55px; height: 55px; background: white; border-radius: 16px; padding: 8px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .team-logo { width: 100%; height: 100%; object-fit: contain; }
+        .team-name { font-size: 13px; font-weight: 600; color: #fff; line-height: 1.2; height: 32px; display: flex; align-items: center; }
+
+        .score-box { text-align: center; min-width: 100px; }
+        .score { font-size: 32px; font-weight: 800; letter-spacing: -1px; color: var(--accent); }
+        .live-tag { 
+            display: inline-block; background: rgba(244, 63, 94, 0.1); color: var(--red); 
+            padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; margin-top: 5px; 
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        /* Modal Detal Dizaynı */
+        #matchModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background: var(--bg); z-index:1000; overflow-y:auto; padding:20px; }
+        .modal-header { background: var(--card); border-radius: 24px; padding: 30px 20px; text-align: center; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05); }
+        .incident-row { 
+            display: flex; align-items: center; padding: 15px; margin-bottom: 10px; 
+            border-radius: 15px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.03);
+        }
+        .btn-refresh { background: var(--accent); border: none; padding: 8px 16px; border-radius: 10px; font-weight: 800; cursor: pointer; color: #000; font-size: 12px; }
     </style>
 </head>
 <body>
 
 <header>
-    <div style="font-size: 20px; font-weight: 800;">PRO<span style="color:var(--accent)">SCORE</span></div>
-    <button class="btn-refresh" onclick="fetchData()">YENİLƏ</button>
+    <div class="header-top">
+        <div style="font-size: 22px; font-weight: 800; letter-spacing: -1px;">PRO<span style="color:var(--accent)">SCORE</span></div>
+        <button class="btn-refresh" onclick="fetchData()">YENİLƏ</button>
+    </div>
+    <input type="text" id="searchInput" class="search-box" placeholder="Komanda və ya liqa axtar..." oninput="filterMatches()">
 </header>
 
 <div class="container" id="matchList">
-    <div style="text-align:center; padding:100px; opacity:0.5;">Yüklənir...</div>
+    <div style="text-align:center; padding:100px; opacity:0.3;">Yüklənir...</div>
 </div>
 
 <div id="matchModal">
-    <button onclick="closeModal()" style="background:none; border:none; color:white; font-size:35px; position:absolute; right:20px; top:10px; cursor:pointer;">&times;</button>
+    <button onclick="closeModal()" style="background:rgba(255,255,255,0.1); border:none; color:white; width:40px; height:40px; border-radius:50%; font-size:24px; position:fixed; right:20px; top:20px; cursor:pointer; z-index:1001;">&times;</button>
     <div id="modalContent" style="max-width:500px; margin:40px auto;"></div>
 </div>
 
 <script>
-    // Bura YENİ Google Apps Script linkini yapışdır!
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby9YoMlKSDkSodhx6J5j9bGYJ9c2uOTjsL8DP3BNets3b3vDQ-Xku5muuShCTK90I95/exec"; 
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydf8bFexFElY9IjEKo042jealgObTbEBUcPw0Gp32ueYDDBz7vQTeQq24q04SAwZew/exec"; 
+    let allEvents = [];
 
     async function fetchData() {
         try {
             const response = await fetch(GOOGLE_SCRIPT_URL);
             const data = await response.json();
-            const events = data.events || data;
-            
-            if (Array.isArray(events) && events.length > 0) {
-                render(events);
-            } else {
-                document.getElementById("matchList").innerHTML = "<div style='text-align:center; padding:100px; opacity:0.5;'>Canlı oyun yoxdur.</div>";
-            }
+            allEvents = data.events || (Array.isArray(data) ? data : []);
+            render(allEvents);
         } catch (e) {
             document.getElementById("matchList").innerHTML = "<div style='text-align:center; padding:50px;'>Xəta baş verdi.</div>";
         }
     }
 
+    function filterMatches() {
+        const query = document.getElementById("searchInput").value.toLowerCase();
+        const filtered = allEvents.filter(ev => 
+            ev.homeTeam.name.toLowerCase().includes(query) || 
+            ev.awayTeam.name.toLowerCase().includes(query) ||
+            ev.tournament.name.toLowerCase().includes(query)
+        );
+        render(filtered);
+    }
+
     function render(events) {
         const list = document.getElementById("matchList");
+        if (events.length === 0) {
+            list.innerHTML = "<div style='text-align:center; padding:100px; opacity:0.5;'>Oyun tapılmadı.</div>";
+            return;
+        }
+
         list.innerHTML = events.map(event => {
             const homeLogo = `https://www.sofascore.com/api/v1/team/${event.homeTeam.id}/image`;
             const awayLogo = `https://www.sofascore.com/api/v1/team/${event.awayTeam.id}/image`;
-            const fb = (n) => `https://ui-avatars.com/api/?name=${encodeURIComponent(n)}&background=1e293b&color=38bdf8&bold=true`;
+            
+            // Dəqiqəni hesabla
+            let timeDisplay = event.status.description;
+            if(event.status.type === 'inprogress') {
+                timeDisplay = (event.lastPeriod === 'period1' ? '1-ci hissə' : (event.lastPeriod === 'period2' ? '2-ci hissə' : 'Canlı'));
+                if(event.status.description.includes("'")) timeDisplay = event.status.description;
+            }
 
             return `
-                <div class="match-card" onclick="showDetails('${event.id}', '${event.homeTeam.name}', '${event.awayTeam.name}', '${event.homeScore.current || 0}:${event.awayScore.current || 0}', '${event.status.description}')">
+                <div class="match-card" onclick="showDetails('${event.id}', '${event.homeTeam.name}', '${event.awayTeam.name}', '${event.homeScore.current || 0}:${event.awayScore.current || 0}', '${timeDisplay}')">
                     <div class="league-name">${event.tournament.name}</div>
                     <div class="match-body">
                         <div class="team">
-                            <div class="logo-box"><img src="${homeLogo}" class="team-logo" onerror="this.src='${fb(event.homeTeam.name)}';"></div>
+                            <div class="logo-box"><img src="${homeLogo}" class="team-logo" onerror="this.src='https://ui-avatars.com/api/?name=${event.homeTeam.name}&background=0f172a&color=fff';"></div>
                             <div class="team-name">${event.homeTeam.shortName || event.homeTeam.name}</div>
                         </div>
                         <div class="score-box">
                             <div class="score">${event.homeScore.current || 0}:${event.awayScore.current || 0}</div>
-                            <div class="minute">${event.status.description === 'Live' ? (event.lastPeriod || '') + "'" : event.status.description}</div>
+                            <div class="live-tag">${timeDisplay}</div>
                         </div>
                         <div class="team">
-                            <div class="logo-box"><img src="${awayLogo}" class="team-logo" onerror="this.src='${fb(event.awayTeam.name)}';"></div>
+                            <div class="logo-box"><img src="${awayLogo}" class="team-logo" onerror="this.src='https://ui-avatars.com/api/?name=${event.awayTeam.name}&background=0f172a&color=fff';"></div>
                             <div class="team-name">${event.awayTeam.shortName || event.awayTeam.name}</div>
                         </div>
                     </div>
@@ -100,15 +154,19 @@
         const modal = document.getElementById("matchModal");
         const content = document.getElementById("modalContent");
         modal.style.display = "block";
-        document.body.style.overflow = "hidden"; // Arxa fonu dondur
+        document.body.style.overflow = "hidden";
         
         content.innerHTML = `
             <div class="modal-header">
-                <h2 style="margin:0; font-size:18px; opacity:0.7;">${home} - ${away}</h2>
-                <div style="font-size:50px; font-weight:800; color:var(--accent); margin:15px 0;">${score}</div>
-                <div style="background:var(--red); display:inline-block; padding:4px 12px; border-radius:8px; font-size:12px;">${time}</div>
+                <div style="font-size:12px; color:var(--accent); margin-bottom:10px; font-weight:800; text-transform:uppercase;">CANLI MATÇ DETALLARI</div>
+                <div style="display:flex; justify-content:space-around; align-items:center; margin:20px 0;">
+                    <div style="font-weight:700; flex:1;">${home}</div>
+                    <div style="font-size:40px; font-weight:800; color:var(--accent); flex:1;">${score}</div>
+                    <div style="font-weight:700; flex:1;">${away}</div>
+                </div>
+                <div style="background:var(--red); display:inline-block; padding:5px 15px; border-radius:10px; font-size:12px; font-weight:800;">${time}</div>
             </div>
-            <div id="incidents"><div style="text-align:center; opacity:0.5;">Hadisələr yüklənir...</div></div>
+            <div id="incidents"><div style="text-align:center; opacity:0.5; padding:40px;">Hadisələr yüklənir...</div></div>
         `;
 
         try {
@@ -116,17 +174,20 @@
             const data = await res.json();
             const goals = (data.incidents || []).filter(i => i.incidentType === "goal");
             
-            let html = "<h3 style='font-size:14px; color:var(--accent); text-align:center;'>QOLLAR</h3>";
+            let html = "<h3 style='font-size:14px; color:var(--gray); text-align:center; margin-bottom:20px;'>MATÇ HADİSƏLƏRİ</h3>";
             if(goals.length > 0) {
                 goals.reverse().forEach(g => {
                     html += `
-                        <div class="incident-row" style="justify-content: ${g.isHome ? 'flex-start' : 'flex-end'}">
-                            <span class="goal-icon">⚽</span>
-                            <span><b>${g.player ? g.player.name : 'Qol'}</b> (${g.time}')</span>
+                        <div class="incident-row" style="flex-direction: ${g.isHome ? 'row' : 'row-reverse'}; text-align: ${g.isHome ? 'left' : 'right'}">
+                            <div style="font-size:20px; margin:0 15px;">⚽</div>
+                            <div style="flex:1">
+                                <div style="font-weight:800; font-size:14px;">${g.player ? g.player.name : 'Qol'}</div>
+                                <div style="font-size:12px; color:var(--accent)">${g.time}' - Hesab (${g.homeScore}:${g.awayScore})</div>
+                            </div>
                         </div>`;
                 });
             } else {
-                html += "<div style='text-align:center; opacity:0.4; margin-top:20px;'>Hələ qol vurulmayıb.</div>";
+                html += "<div style='text-align:center; opacity:0.4; padding:20px;'>Hələ ki, önəmli hadisə yoxdur.</div>";
             }
             document.getElementById("incidents").innerHTML = html;
         } catch (e) {
@@ -140,7 +201,7 @@
     }
 
     fetchData();
-    setInterval(fetchData, 60000);
+    setInterval(fetchData, 30000); // 30 saniyədən bir yenilə
 </script>
 </body>
 </html>
