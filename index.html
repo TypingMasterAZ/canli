@@ -1,361 +1,243 @@
 <!DOCTYPE html>
 <html lang="az">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="referrer" content="no-referrer">
-    <title>ProScore Elite | Live Center</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-  --bg: #0a0f1f;
-  --surface: #0f172a;
-  --card: #111c36;
-  --primary: #2563eb;
-  --accent: #38bdf8;
-  --danger: #ef4444;
-  --text: #e5e7eb;
-  --muted: #94a3b8;
-  --border: rgba(255,255,255,0.06);
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer">
+<title>ProScore Elite | Live Center</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg:#0a0f1f;
+  --card:#111c36;
+  --primary:#2563eb;
+  --accent:#38bdf8;
+  --danger:#ef4444;
+  --text:#e5e7eb;
+  --muted:#94a3b8;
+  --border:rgba(255,255,255,0.06);
 }
 
-/* RESET */
-* {
-  box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent;
+/* 🔒 MODAL AÇIQ OLANDA BODY SCROLL BAĞLA */
+body:has(#detailsModal[style*="block"]) {
+  overflow: hidden;
 }
+
+* { box-sizing:border-box; }
 
 body {
-  margin: 0;
-  font-family: 'Inter', system-ui, sans-serif;
-  background: radial-gradient(circle at top, #0f172a, #020617);
-  color: var(--text);
+  margin:0;
+  font-family:'Inter',sans-serif;
+  background:radial-gradient(circle at top,#0f172a,#020617);
+  color:var(--text);
 }
 
 /* HEADER */
 header {
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-  background: rgba(2,6,23,0.85);
-  backdrop-filter: blur(14px);
-  border-bottom: 1px solid var(--border);
+  position:sticky;
+  top:0;
+  z-index:1000;
+  background:rgba(2,6,23,.9);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border);
 }
-
 .header-content {
-  max-width: 640px;
-  margin: auto;
-  padding: 14px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  max-width:640px;
+  margin:auto;
+  padding:14px 16px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
 }
-
 .header-content button {
-  background: linear-gradient(135deg, var(--primary), var(--accent));
-  color: #fff;
-  border: none;
-  padding: 7px 18px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
+  background:linear-gradient(135deg,var(--primary),var(--accent));
+  color:#fff;
+  border:none;
+  padding:7px 18px;
+  border-radius:999px;
+  font-weight:700;
+  font-size:12px;
 }
 
 /* CONTAINER */
 .container {
-  max-width: 640px;
-  margin: auto;
-  padding: 16px;
+  max-width:640px;
+  margin:auto;
+  padding:16px;
 }
 
-/* LEAGUE GROUP */
+/* LEAGUE */
 .league-group {
-  margin-top: 20px;
-  background: var(--card);
-  border-radius: 20px;
-  border: 1px solid var(--border);
-  overflow: hidden;
+  margin-top:20px;
+  background:var(--card);
+  border-radius:20px;
+  border:1px solid var(--border);
+  overflow:hidden;
 }
-
 .league-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  background: linear-gradient(
-    90deg,
-    rgba(37,99,235,0.18),
-    transparent
-  );
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:12px 16px;
+  background:linear-gradient(90deg,rgba(37,99,235,.18),transparent);
 }
-
-.league-header img {
-  width: 20px;
-  height: 20px;
-}
-
+.league-header img { width:20px;height:20px; }
 .league-title {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 1px;
-  color: var(--muted);
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:1px;
+  color:var(--muted);
 }
 
-/* MATCH CARD */
+/* MATCH */
 .match-card {
-  display: grid;
-  grid-template-columns: 48px 1fr;
-  gap: 12px;
-  padding: 14px 16px;
-  position: relative;
-  cursor: pointer;
-  transition: background .2s ease;
+  display:grid;
+  grid-template-columns:48px 1fr;
+  gap:12px;
+  padding:14px 16px;
+  position:relative;
+  cursor:pointer;
 }
-
-.match-card:not(:last-child) {
-  border-bottom: 1px solid var(--border);
-}
-
-.match-card:hover {
-  background: rgba(255,255,255,0.03);
-}
-
+.match-card:not(:last-child){border-bottom:1px solid var(--border);}
 .match-card::after {
-  content: "›";
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 26px;
-  color: var(--muted);
+  content:"›";
+  position:absolute;
+  right:16px;
+  top:50%;
+  transform:translateY(-50%);
+  font-size:26px;
+  color:var(--muted);
 }
-
-/* TIME */
 .time-col {
-  font-size: 11px;
-  font-weight: 900;
-  color: var(--danger);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:11px;
+  font-weight:900;
+  color:var(--danger);
 }
-
-/* TEAMS */
 .teams-col {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding-right: 28px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  padding-right:28px;
 }
-
 .team-line {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
+  display:grid;
+  grid-template-columns:1fr auto;
+  align-items:center;
+  min-height:28px;
 }
-
 .team-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  display:flex;
+  align-items:center;
+  gap:10px;
 }
-
 .team-logo {
-  width: 22px;
-  height: 22px;
-  background: #fff;
-  padding: 3px;
-  border-radius: 6px;
+  width:24px;
+  height:24px;
+  object-fit:contain;
+  background:#fff;
+  padding:3px;
+  border-radius:6px;
 }
-
-.team-name {
-  font-size: 13px;
-  font-weight: 600;
-}
-
+.team-name { font-size:13px;font-weight:600; }
 .score-val {
-  font-size: 16px;
-  font-weight: 900;
-  color: var(--accent);
+  font-size:16px;
+  font-weight:900;
+  color:var(--accent);
 }
 
 /* MODAL */
 #detailsModal {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: linear-gradient(180deg, #020617, #020617);
-  z-index: 2000;
-  overflow-y: auto;
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:2000;
+  background:#020617;
+  overflow-y:auto;
 }
 
 /* MODAL HEADER */
 .modal-header {
-  padding: 32px 16px 24px;
-  text-align: center;
-  background: radial-gradient(
-    circle at top,
-    rgba(37,99,235,0.35),
-    transparent 65%
-  );
+  padding:32px 16px 24px;
+  text-align:center;
+  background:radial-gradient(circle at top,rgba(37,99,235,.35),transparent 65%);
 }
-
 .close-btn {
-  position: absolute;
-  left: 16px;
-  top: 16px;
-  font-size: 34px;
-  color: var(--muted);
+  position:absolute;
+  left:16px;
+  top:16px;
+  font-size:34px;
+  color:var(--muted);
 }
-
-/* SCORE AREA */
 .modal-score-area {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  gap: 16px;
-  margin-top: 28px;
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  align-items:center;
+  gap:16px;
+  margin-top:28px;
 }
-
 .modal-team {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:8px;
 }
-
 .modal-team img {
-  width: 56px;
-  height: 56px;
-  background: #fff;
-  padding: 6px;
-  border-radius: 14px;
+  width:56px;
+  height:56px;
+  background:#fff;
+  padding:6px;
+  border-radius:14px;
 }
-
-.modal-team span {
-  font-size: 14px;
-  font-weight: 700;
-}
-
 .modal-score-big {
-  font-size: 44px;
-  font-weight: 900;
-  min-width: 120px;
+  font-size:44px;
+  font-weight:900;
+  min-width:120px;
 }
 
 /* INCIDENTS */
-.incident-container {
-  padding: 24px 16px;
-}
-
+.incident-container { padding:24px 16px; }
 .incident-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  font-size: 13px;
-  margin-bottom: 12px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  font-size:13px;
+  margin-bottom:12px;
 }
-
-.inc-home {
-  text-align: right;
-  padding-right: 12px;
-}
-
-.inc-away {
-  text-align: left;
-  padding-left: 12px;
-}
-
-.inc-time {
-  font-weight: 800;
-  color: var(--danger);
-}
-
-.goal-name {
-  font-weight: 600;
-}
+.inc-home { text-align:right;padding-right:12px; }
+.inc-away { text-align:left;padding-left:12px; }
+.inc-time { font-weight:800;color:var(--danger); }
 
 /* STATS */
-.stat-section {
-  padding: 24px 16px 40px;
-}
-
-.stat-row {
-  margin-bottom: 20px;
-}
-
+.stat-section { padding:24px 16px 40px; }
+.stat-row { margin-bottom:20px; }
 .stat-labels {
-  display: grid;
-  grid-template-columns: 40px 1fr 40px;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--muted);
-  margin-bottom: 6px;
+  display:grid;
+  grid-template-columns:40px 1fr 40px;
+  font-size:11px;
+  font-weight:700;
+  color:var(--muted);
 }
-
-.stat-labels span:nth-child(1) {
-  text-align: left;
-}
-
-.stat-labels span:nth-child(2) {
-  text-align: center;
-}
-
-.stat-labels span:nth-child(3) {
-  text-align: right;
-}
-
 .stat-bar-bg {
-  height: 7px;
-  background: #020617;
-  border-radius: 999px;
-  overflow: hidden;
-  display: flex;
+  height:7px;
+  background:#020617;
+  border-radius:999px;
+  overflow:hidden;
+  display:flex;
 }
-
 .stat-bar-home {
-  background: linear-gradient(90deg, var(--primary), var(--accent));
+  background:linear-gradient(90deg,var(--primary),var(--accent));
 }
-
 .stat-bar-away {
-  background: linear-gradient(90deg, #f97316, #fb7185);
+  background:linear-gradient(90deg,#f97316,#fb7185);
 }
-
-    </style>
+</style>
 </head>
+
 <body>
-
-<header>
-    <div class="header-content">
-        <div style="font-size: 18px; font-weight: 800;">PRO<span style="color:#64b5f6">SCORE</span></div>
-        <button onclick="fetchData()" style="background:rgba(255,255,255,0.2); color:white; border:none; padding:6px 15px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">YENİLƏ</button>
-    </div>
-</header>
-
-<div class="container" id="matchList">
-    <div style="text-align:center; padding:100px; opacity:0.3;">Oyunlar yüklənir...</div>
-</div>
-
-<div id="detailsModal">
-    <div class="modal-header">
-        <span class="close-btn" onclick="closeModal()">&times;</span>
-        <div id="leagueM" style="font-size:10px; opacity:0.7; text-transform:uppercase; letter-spacing:1px;"></div>
-        <div class="modal-score-area">
-            <div class="modal-team">
-                <img id="logoH" src="">
-                <span id="nameH"></span>
-            </div>
-            <div class="modal-score-big" id="scoreM">0 - 0</div>
-            <div class="modal-team">
-                <img id="logoA" src="">
-                <span id="nameA"></span>
-            </div>
-        </div>
-        <div id="timeM" style="margin-top:15px; font-weight:800; color:#4caf50; background:rgba(255,255,255,0.1); display:inline-block; padding:3px 12px; border-radius:20px; font-size:12px;"></div>
-    </div>
-    
-    <div class="incident-container" id="goalsBox"></div>
-    <div class="stat-section" id="statsBox"></div>
-</div>
 
 <script>
     const G_URL = "https://script.google.com/macros/s/AKfycbxQV1itjk_W7qC7b3yniMt84-HPrufktquS1x2zpDb_fFb81hYdq1bAmhWsxhPNjleg/exec"; 
@@ -456,5 +338,6 @@ header {
     fetchData();
     setInterval(fetchData, 30000);
 </script>
+
 </body>
 </html>
