@@ -3075,10 +3075,11 @@
             try {
             // API Ünvanının təyin edilməsi (Lokal və ya Render)
             const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            // DİQQƏT: Render-dən aldığınız ünvanı aşağıdakı DEPLOYED_URL hissəsinə yazın (məsələn: 'https://proscore-live.onrender.com')
+            const isRender = window.location.hostname.includes('onrender.com');
+            // DİQQƏT: Render-dən aldığınız ünvanı aşağıdakı DEPLOYED_URL hissəsinə yazın
             const DEPLOYED_URL = 'https://canli-57xq.onrender.com'; 
-            const API_BASE_URL = (isLocalhost || !DEPLOYED_URL) ? '' : DEPLOYED_URL;
-            console.log("API Base URL:", API_BASE_URL || "Local");
+            const API_BASE_URL = (isLocalhost || isRender || !DEPLOYED_URL) ? '' : DEPLOYED_URL;
+            console.log("API Base URL:", API_BASE_URL || "Local/SameOrigin");
 
             let allEvents = [];
             let groupedDataGlobal = {};
@@ -3554,7 +3555,7 @@
                     
                     try {
                         const path = isUnique ? 'unique-tournament' : 'tournament';
-                        const tInfo = await fetch(`/api/${path}/${tourId}`);
+                        const tInfo = await fetch(API_BASE_URL + `/api/${path}/${tourId}`);
                         const tData = await tInfo.json();
                         const entity = isUnique ? tData.uniqueTournament : tData.tournament;
                         if (entity) {
@@ -3566,7 +3567,7 @@
 
                     try {
                         const path = isUnique ? 'unique-tournament' : 'tournament';
-                        const cInfo = await fetch(`/api/${path}/${tourId}/seasons`);
+                        const cInfo = await fetch(API_BASE_URL + `/api/${path}/${tourId}/seasons`);
                         const cData = await cInfo.json();
                         group.seasonId = cData.seasons && cData.seasons[0] ? cData.seasons[0].id : null;
                     } catch(e) { console.error("Seasons info error:", e); }
@@ -3586,7 +3587,7 @@
 
                 if (!group.seasonId) {
                     try {
-                        const sResp = await fetch(`/api/tournament/${group.id}/seasons`);
+                        const sResp = await fetch(API_BASE_URL + `/api/tournament/${group.id}/seasons`);
                         const sData = await sResp.json();
                         group.seasonId = sData.seasons && sData.seasons[0] ? sData.seasons[0].id : null;
                     } catch(e) { console.error("Secondary seasons fetch error:", e); }
@@ -3658,7 +3659,7 @@
                 if (currentStandingsTourId !== tourId) return;
 
                 try {
-                    const res = await fetch(`/api/standings/${tourId}/${seasonId}`);
+                    const res = await fetch(API_BASE_URL + `/api/standings/${tourId}/${seasonId}`);
                     const data = await res.json();
 
                     if (data && data.standings && data.standings.length > 0) {
@@ -3728,7 +3729,7 @@
                 if (!tourId || !seasonId) return;
                 const box = document.getElementById("leagueTopPlayers");
                 try {
-                    const res = await fetch(`/api/tournament/${tourId}/season/${seasonId}/top-players`);
+                    const res = await fetch(API_BASE_URL + `/api/tournament/${tourId}/season/${seasonId}/top-players`);
                     const data = await res.json();
                     let topPlayers = [];
                     if (data.topPlayers && data.topPlayers.goals) {
@@ -4832,7 +4833,7 @@
                         
                         // Fetch profile from backend
                         try {
-                            const pRes = await fetch(`/api/auth/profile/${email}`);
+                            const pRes = await fetch(API_BASE_URL + `/api/auth/profile/${email}`);
                             if (pRes.ok) {
                                 const pData = await pRes.json();
                                 if (pData.success) {
@@ -4851,7 +4852,7 @@
                         await userCredential.user.updateProfile({ displayName: username });
                         
                         // Initial profile sync
-                        await fetch('/api/auth/update-profile', {
+                        await fetch(API_BASE_URL + '/api/auth/update-profile', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
@@ -5010,7 +5011,7 @@
                 }
 
                 try {
-                    const res = await fetch('/api/auth/send-otp', {
+                    const res = await fetch(API_BASE_URL + '/api/auth/send-otp', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ email })
@@ -5043,7 +5044,7 @@
 
                 try {
                     console.log(`[AUTH] Verifying OTP for ${email}`);
-                    const res = await fetch('/api/auth/check-otp', {
+                    const res = await fetch(API_BASE_URL + '/api/auth/check-otp', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ email, otp })
@@ -5092,7 +5093,7 @@
                 }
 
                 try {
-                    const res = await fetch('/api/auth/verify-otp', {
+                    const res = await fetch(API_BASE_URL + '/api/auth/verify-otp', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ email, otp, newPassword })
