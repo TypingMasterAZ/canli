@@ -66,18 +66,43 @@ app.use((req, res, next) => {
 const SOFA_API = "https://api.sofascore.com/api/v1";
 const HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-    "Accept": "*/*",
-    "Accept-Language": "en-US,en;q=0.9",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+    "Accept-Language": "en-US,en;q=0.9,az;q=0.8",
     "Referer": "https://www.sofascore.com/",
     "Origin": "https://www.sofascore.com",
-    "Cache-Control": "no-cache",
+    "Cache-Control": "max-age=0",
     "sec-ch-ua": '"Google Chrome";v="123", "Not:A-Brand";v="8", "Chromium";v="123"',
     "sec-ch-ua-mobile": "?0",
     "sec-ch-ua-platform": '"Windows"',
     "sec-fetch-dest": "empty",
     "sec-fetch-mode": "cors",
-    "sec-fetch-site": "same-site"
+    "sec-fetch-site": "same-site",
+    "Upgrade-Insecure-Requests": "1"
 };
+
+// Caching System
+const cache = {};
+const CACHE_TIMES = {
+    LIVE: 30 * 1000,       // 30 saniyə
+    SCHEDULED: 5 * 60 * 1000, // 5 dəqiqə
+    STATIC: 60 * 60 * 1000    // 1 saat
+};
+
+async function getCachedData(key, fetchFn, ttl) {
+    const now = Date.now();
+    if (cache[key] && (now - cache[key].timestamp < ttl)) {
+        console.log(`[CACHE HIT] Key: ${key}`);
+        return cache[key].data;
+    }
+    
+    console.log(`[CACHE MISS] Key: ${key}. Fetching fresh data...`);
+    // Random jitter (100ms - 500ms) to avoid robotic patterns
+    await new Promise(resolve => setTimeout(resolve, Math.random() * 400 + 100));
+    
+    const data = await fetchFn();
+    cache[key] = { data, timestamp: now };
+    return data;
+}
 
 // API vasitəçisi (Komanda məlumatları və heyət üçün)
 app.get("/api/team/:id", async (req, res) => {
@@ -97,10 +122,11 @@ app.get("/api/team/:id", async (req, res) => {
 // Yeni API: Canlı Matçlar
 app.get("/api/matches/live", async (req, res) => {
     try {
-        console.log(`[API CALL] Fetching live matches from: ${SOFA_API}/sport/football/events/live`);
-        const result = await axios.get(`${SOFA_API}/sport/football/events/live`, { headers: HEADERS });
-        console.log(`[API SUCCESS] Live matches fetched.`);
-        res.json(result.data);
+        const data = await getCachedData("live_matches", async () => {
+            const result = await axios.get(`${SOFA_API}/sport/football/events/live`, { headers: HEADERS });
+            return result.data;
+        }, CACHE_TIMES.LIVE);
+        res.json(data);
     } catch (error) {
         console.error(`[API ERROR] Live matches: ${error.message}${error.response ? ' | Status: ' + error.response.status : ''}`);
         res.status(500).json({ error: true, message: error.message });
@@ -111,9 +137,11 @@ app.get("/api/matches/live", async (req, res) => {
 app.get("/api/matches/:date", async (req, res) => {
     const { date } = req.params;
     try {
-        console.log(`[API CALL] Fetching matches for ${date}`);
-        const result = await axios.get(`${SOFA_API}/sport/football/scheduled-events/${date}`, { headers: HEADERS });
-        res.json(result.data);
+        const data = await getCachedData(`matches_${date}`, async () => {
+            const result = await axios.get(`${SOFA_API}/sport/football/scheduled-events/${date}`, { headers: HEADERS });
+            return result.data;
+        }, CACHE_TIMES.SCHEDULED);
+        res.json(data);
     } catch (error) {
         console.error(`[API ERROR] Scheduled matches for date ${date}: ${error.message}${error.response ? ' | Status: ' + error.response.status : ''}`);
         res.status(500).json({ error: true, message: error.message });
@@ -171,9 +199,13 @@ app.get("/api/standings/:tourId/:seasonId", async (req, res) => {
 // Yeni API: Populyar Liqalar siyahısı
 app.get("/api/top-leagues", async (req, res) => {
     try {
-        const result = await axios.get(`${SOFA_API}/config/top-unique-tournaments/AZ/football`, { headers: HEADERS });
-        res.json(result.data);
+        const data = await getCachedData("top_leagues", async () => {
+            const result = await axios.get(`${SOFA_API}/config/top-unique-tournaments/AZ/football`, { headers: HEADERS });
+            return result.data;
+        }, CACHE_TIMES.STATIC);
+        res.json(data);
     } catch (error) {
+        console.error(`[API ERROR] Top Leagues: ${error.message}`);
         res.status(500).json({ error: true });
     }
 });
@@ -181,9 +213,13 @@ app.get("/api/top-leagues", async (req, res) => {
 // Yeni API: Bütün Kategoriyalar (Ölkələr)
 app.get("/api/categories", async (req, res) => {
     try {
-        const result = await axios.get(`${SOFA_API}/sport/football/categories`, { headers: HEADERS });
-        res.json(result.data);
+        const data = await getCachedData("categories", async () => {
+            const result = await axios.get(`${SOFA_API}/sport/football/categories`, { headers: HEADERS });
+            return result.data;
+        }, CACHE_TIMES.STATIC);
+        res.json(data);
     } catch (error) {
+        console.error(`[API ERROR] Categories: ${error.message}`);
         res.status(500).json({ error: true });
     }
 });
