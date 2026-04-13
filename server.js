@@ -16,11 +16,19 @@ let firebaseInitialized = false;
 
 if (process.env.FIREBASE_SERVICE_ACCOUNT) {
   try {
-    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    let serviceAccountRaw = process.env.FIREBASE_SERVICE_ACCOUNT;
+    // Bəzən Render-də dırnaqlar və ya newline simvolları ilə bağlı JSON problemi olur
+    serviceAccount = JSON.parse(serviceAccountRaw);
+    
+    // Private key daxilindəki \n simvollarını həqiqi newline ilə əvəz etmək (vacibdir)
+    if (serviceAccount.private_key && serviceAccount.private_key.includes('\\n')) {
+        serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+    }
+    
     firebaseInitialized = true;
     console.log("Firebase Admin SDK initialized from Environment Variable.");
   } catch (e) {
-    console.error("FIREBASE_SERVICE_ACCOUNT parse error.");
+    console.error("FIREBASE_SERVICE_ACCOUNT parse error:", e.message);
   }
 }
 
