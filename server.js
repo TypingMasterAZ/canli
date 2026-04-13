@@ -108,10 +108,23 @@ async function fetchFromSofa(path, params = {}) {
         // Enhance error message if it's a proxy/parse issue
         if (error.response && typeof error.response.data === 'string' && error.response.data.includes('<!doctype')) {
             error.message = "Google Script etibarsız cavab qaytardı (Login səhifəsi). Lütfən Script icazələrini yoxlayın.";
+        } else if (!GAS_PROXY_URL) {
+            error.message = "GAS_PROXY_URL mühit dəyişəni təyin edilməyib! Lütfən Render Dashboard-da əlavə edin.";
         }
         throw error;
     }
 }
+
+// Diagnostic Endpoint
+app.get("/api/debug/proxy", (req, res) => {
+    res.json({
+        proxy_configured: !!GAS_PROXY_URL,
+        proxy_prefix: GAS_PROXY_URL ? GAS_PROXY_URL.substring(0, 40) + "..." : "NONE",
+        sofa_api: SOFA_API,
+        node_version: process.version,
+        env_keys: Object.keys(process.env).filter(key => key.includes("GAS") || key.includes("URL") || key.includes("API"))
+    });
+});
 
 // Caching System
 const cache = {};
@@ -162,7 +175,7 @@ app.get("/api/matches/live", async (req, res) => {
         res.json(data);
     } catch (error) {
         console.error(`[API ERROR] Live matches: ${error.message}${error.response ? ' | Status: ' + error.response.status : ''}`);
-        res.status(500).json({ error: true, message: error.message });
+        res.status(500).json({ error: true, message: error.message, details: error.response?.data?.substring?.(0, 100) });
     }
 });
 
