@@ -4609,11 +4609,19 @@
                 // FCM UPDATE END
             }
 
-            async function sendTestPush() {
+            window.sendTestPush = async function() {
                 try {
+                    console.log("[FCM] Test push requested...");
                     showToast("Sınaq bildirişi göndərilir...");
+                    
+                    if (typeof firebase === 'undefined') {
+                        throw new Error("Firebase yüklənməyib!");
+                    }
+
                     const messaging = firebase.messaging();
                     const swReg = await navigator.serviceWorker.ready;
+                    
+                    console.log("[FCM] SW ready, obtaining token...");
                     const token = await messaging.getToken({ 
                         serviceWorkerRegistration: swReg,
                         vapidKey: 'BPAPOqZmGdoTDrIgfoFD99QaV6bmdgab9eXNZQNjkKAzuCqsrnIdtnzi8rX99lLGHiDlp3L4fx64EBezAGHytOY' 
@@ -4624,21 +4632,26 @@
                         return;
                     }
 
+                    console.log("[FCM] Token obtained, sending to server...");
                     const res = await fetch(API_BASE_URL + '/api/fcm/test-push', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({ token: token })
                     });
+                    
                     const data = await res.json();
                     if (data.success) {
+                        console.log("[FCM] Server test push successful:", data.messageId);
                         showToast("Bildiriş göndərildi! Gəlməsə, tətbiqi bağlayıb 3 saniyə gözləyin.", "success");
                     } else {
+                        console.error("[FCM] Server test push error:", data.message);
                         showToast("Xəta: " + data.message, "error");
                     }
                 } catch(e) {
+                    console.error("[FCM] Test push logic crashed:", e);
                     showToast("Sistem xətası: " + e.message, "error");
                 }
-            }
+            };
 
             async function registerFCMToken() {
                 try {
