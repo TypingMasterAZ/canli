@@ -2581,13 +2581,33 @@
         }
 
         .clear-all-btn {
-            color: var(--live);
+            color: #ef4444; /* Qırmızı rəng daha yaxşı olar */
             font-weight: 700;
             font-size: 13px;
             cursor: pointer;
             display: flex;
             align-items: center;
             gap: 6px;
+            padding: 6px 10px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            background: rgba(239, 68, 68, 0.05);
+        }
+        .clear-all-btn:hover {
+            background: rgba(239, 68, 68, 0.15);
+            transform: scale(1.05);
+        }
+        .notif-delete-btn {
+            font-size: 18px;
+            cursor: pointer;
+            padding: 10px;
+            opacity: 0.4;
+            transition: all 0.2s;
+            color: #ef4444;
+        }
+        .notif-delete-btn:hover {
+            opacity: 1;
+            transform: scale(1.2);
         }
 
         /* Auto Auth Overlay */
@@ -3529,7 +3549,7 @@
                         <span class="notification-body">${n.body}</span>
                         <span class="notification-time">${n.time}</span>
                     </div>
-                    <div style="font-size:18px; cursor:pointer; padding:10px;" onclick="event.stopPropagation(); notificationMgr.deleteNotification(${n.id})">✕</div>
+                    <div class="notif-delete-btn" onclick="event.stopPropagation(); window.notificationMgr.deleteNotification('${n.id}')">✕</div>
                 </div>
             `).join('');
 
@@ -3548,7 +3568,8 @@
                 }
 
                 deleteNotification(id) {
-                    this.history = this.history.filter(n => n.id !== id);
+                    // ID simvol dizisi ola bilər, ona görə == istifadə edirik
+                    this.history = this.history.filter(n => n.id.toString() !== id.toString());
                     localStorage.setItem('notifHistory', JSON.stringify(this.history));
                     this.unreadCount = this.history.filter(n => n.unread).length;
                     this.updateBadge();
@@ -3586,7 +3607,7 @@
                 }
             }
 
-            const notificationMgr = new NotificationManager();
+            window.notificationMgr = new NotificationManager();
 
             /* View Route Logic */
             let currentStandingsTourId = null;
