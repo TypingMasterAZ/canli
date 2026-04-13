@@ -3058,16 +3058,20 @@
                             <span class="slider"></span>
                         </label>
                     </div>
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-                        
-                        <div class="profile-row" id="testPushBtnBox" style="display: none; background: rgba(59, 130, 246, 0.05); border-radius: 12px; margin-top: 10px;">
-                            <span style="font-size:15px; font-weight:700; color:rgba(255,255,255,0.9);">Sınaq Bildirişi</span>
-                            <button onclick="sendTestPush()" style="margin:0; padding:8px 16px; background:#3b82f6; color:white; border:none; border-radius:10px; font-size:12px; font-weight:700; cursor:pointer; box-shadow: 0 4px 10px rgba(59,130,246,0.3);">
-                                🔔 İndi Yoxla
-                            </button>
-                        </div>
+                    <div class="profile-row">
+                        <span style="font-size:15px; font-weight:700; color:rgba(255,255,255,0.9);">Səsli Bildiriş</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="soundNotifToggle" onchange="updateSetting('soundEnabled', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="profile-row" id="testPushBtnBox" style="display: none; background: rgba(59, 130, 246, 0.05); border-radius: 12px; margin-top: 10px; padding: 12px;">
+                        <span style="font-size:15px; font-weight:700; color:rgba(255,255,255,0.9);">Sınaq Bildirişi</span>
+                        <button onclick="sendTestPush()" style="margin:0; padding:8px 16px; background:#3b82f6; color:white; border:none; border-radius:10px; font-size:12px; font-weight:700; cursor:pointer; box-shadow: 0 4px 10px rgba(59,130,246,0.3);">
+                            🔔 İndi Yoxla
+                        </button>
+                    </div>
                         
                         <div style="padding:10px; font-size:10px; color:gray; word-break:break-all;" id="debugSettings"></div>
 
