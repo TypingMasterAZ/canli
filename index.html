@@ -3066,12 +3066,6 @@
                         </label>
                     </div>
                     
-                    <div class="profile-row" id="testPushBtnBox" style="display: none; background: rgba(59, 130, 246, 0.05); border-radius: 12px; margin-top: 10px; padding: 12px;">
-                        <span style="font-size:15px; font-weight:700; color:rgba(255,255,255,0.9);">Sınaq Bildirişi</span>
-                        <button onclick="sendTestPush()" style="margin:0; padding:8px 16px; background:#3b82f6; color:white; border:none; border-radius:10px; font-size:12px; font-weight:700; cursor:pointer; box-shadow: 0 4px 10px rgba(59,130,246,0.3);">
-                            🔔 İndi Yoxla
-                        </button>
-                    </div>
                         
                         <div style="padding:10px; font-size:10px; color:gray; word-break:break-all;" id="debugSettings"></div>
 
@@ -3430,8 +3424,11 @@
 
                             // Check for GOAL
                             if (ev.homeScore.current > prev.h || ev.awayScore.current > prev.a) {
-                                const scorer = ev.homeScore.current > prev.h ? ev.homeTeam.name : ev.awayTeam.name;
-                                this.addNotification('goal', 'QOOL!', `${scorer} qol vurdu! (${ev.homeTeam.name} ${ev.homeScore.current} - ${ev.awayScore.current} ${ev.awayTeam.name})`, ev.id);
+                                const hs = ev.homeScore.current;
+                                const as = ev.awayScore.current;
+                                const title = `Rabona Media: ${ev.homeTeam.name} - ${ev.awayTeam.name} GOOOL!`;
+                                const body = `${ev.homeTeam.name} ${hs} - ${as} ${ev.awayTeam.name}. Hesab dəyişdi!`;
+                                this.addNotification('goal', title, body, ev.id);
                             }
                             // Check for Match Start
                             else if (prev.status === 'notstarted' && ev.status.type === 'inprogress') {
@@ -4594,64 +4591,7 @@
                     showToast('Oyun favoritlərdən çıxarıldı');
                 }
                 localStorage.setItem('favMatches', JSON.stringify(favMatches));
-                
-                // FCM UPDATE START
-                if ("Notification" in window) {
-                   if (Notification.permission === 'default') {
-                       Notification.requestPermission().then(p => { 
-                           if(p === 'granted') registerFCMToken(); 
-                       });
-                   } else if (Notification.permission === 'granted') {
-                       registerFCMToken();
-                       document.getElementById('testPushBtnBox').style.display = 'flex';
-                   }
-                }
-                // FCM UPDATE END
             }
-
-            window.sendTestPush = async function() {
-                try {
-                    console.log("[FCM] Test push requested...");
-                    showToast("Sınaq bildirişi göndərilir...");
-                    
-                    if (typeof firebase === 'undefined') {
-                        throw new Error("Firebase yüklənməyib!");
-                    }
-
-                    const messaging = firebase.messaging();
-                    const swReg = await navigator.serviceWorker.ready;
-                    
-                    console.log("[FCM] SW ready, obtaining token...");
-                    const token = await messaging.getToken({ 
-                        serviceWorkerRegistration: swReg,
-                        vapidKey: 'BPAPOqZmGdoTDrIgfoFD99QaV6bmdgab9eXNZQNjkKAzuCqsrnIdtnzi8rX99lLGHiDlp3L4fx64EBezAGHytOY' 
-                    });
-
-                    if (!token) {
-                        showToast("Token alınmadı. İcazələri yoxlayın.", "error");
-                        return;
-                    }
-
-                    console.log("[FCM] Token obtained, sending to server...");
-                    const res = await fetch(API_BASE_URL + '/api/fcm/test-push', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ token: token })
-                    });
-                    
-                    const data = await res.json();
-                    if (data.success) {
-                        console.log("[FCM] Server test push successful:", data.messageId);
-                        showToast("Bildiriş göndərildi! Gəlməsə, tətbiqi bağlayıb 3 saniyə gözləyin.", "success");
-                    } else {
-                        console.error("[FCM] Server test push error:", data.message);
-                        showToast("Xəta: " + data.message, "error");
-                    }
-                } catch(e) {
-                    console.error("[FCM] Test push logic crashed:", e);
-                    showToast("Sistem xətası: " + e.message, "error");
-                }
-            };
 
             async function registerFCMToken() {
                 try {
@@ -4897,16 +4837,6 @@
                     if (sNotif) sNotif.checked = !!userSettings.soundEnabled;
                     if (fNotif) fNotif.checked = !!userSettings.onlyFavNotif;
                     
-                    // Show test button if notifications are enabled
-                    const testBtn = document.getElementById('testPushBtnBox');
-                    if (testBtn) {
-                        if (userSettings.browserNotifEnabled && Notification.permission === 'granted') {
-                            testBtn.style.display = 'flex';
-                        } else {
-                            testBtn.style.display = 'none';
-                        }
-                    }
-
                     const dbg = document.getElementById('debugSettings');
                     if(dbg) dbg.innerText = "Yaddaşdakı vəziyyət: " + JSON.stringify(userSettings);
                 }, 100);
@@ -4977,7 +4907,6 @@
                         if (permission === "granted") {
                             updateSetting('browserNotifEnabled', true);
                             registerFCMToken();
-                            document.getElementById('testPushBtnBox').style.display = 'flex';
                             showToast('Bildirişlər aktiv edildi', 'success');
                             
                             // Show Home Screen Guide for iOS if not standalone
