@@ -20,29 +20,36 @@ const bc = new BroadcastChannel('goal_notifications');
 messaging.onBackgroundMessage((payload) => {
     console.log('[firebase-messaging-sw.js] Received background message ', payload);
     
-    // Əgər payload-da notification obyekti varsa, onu göstər
-    if (payload.notification) {
-        const notificationTitle = payload.notification.title || "Yeni Qol!";
-        const notificationOptions = {
-            body: payload.notification.body || "Matçda yenilik var.",
-            icon: '/favicon.ico', 
-            badge: '/favicon.ico',
-            data: payload.data, 
-            vibrate: [300, 100, 400],
-            requireInteraction: true,
-        };
-        
-        // Notify main thread if open
-        bc.postMessage({
-            type: 'GOAL_NOTIFICATION',
-            payload: {
-                title: notificationTitle,
-                body: notificationOptions.body,
-                matchId: payload.data ? payload.data.matchId : null,
-                time: new Date().toLocaleTimeString('az-AZ', { hour: '2-digit', minute: '2-digit' })
-            }
-        });
+    // Determine notification content
+    const notificationTitle = payload.notification?.title || payload.data?.title || "Yeni Qol!";
+    const notificationBody = payload.notification?.body || payload.data?.body || "Matçda yenilik var.";
+    
+    const notificationOptions = {
+        body: notificationBody,
+        icon: 'https://www.sofascore.com/favicon.ico', 
+        badge: 'https://www.sofascore.com/favicon.ico',
+        data: payload.data, 
+        vibrate: [300, 100, 300],
+        requireInteraction: true,
+        tag: payload.data?.matchId ? `goal-${payload.data.matchId}` : 'general-notification',
+        renotify: true
+    };
+    
+    // Notify main thread if open
+    bc.postMessage({
+        type: 'GOAL_NOTIFICATION',
+        payload: {
+            title: notificationTitle,
+            body: notificationBody,
+            matchId: payload.data ? payload.data.matchId : null,
+            time: new Date().toLocaleTimeString('az-AZ', { hour: '2-digit', minute: '2-digit' })
+        }
+    });
 
+    // Only show manually if the browser doesn't handle the 'notification' block itself
+    // FCM usually handles the notification block automatically if present.
+    // If it's a data-only message, we MUST show it manually.
+    if (!payload.notification) {
         return self.registration.showNotification(notificationTitle, notificationOptions);
     }
 });

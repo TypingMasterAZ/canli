@@ -703,13 +703,19 @@ app.post("/api/fcm/test-push", async (req, res) => {
             body: "Təbriklər! Arxa plan bildirişləri artıq aktivdir 🚀"
         },
         data: { type: 'test' },
-        android: { notification: { sound: 'default', priority: 'high' } },
-        apns: { payload: { aps: { sound: 'default' } } },
+        android: { 
+            priority: 'high',
+            notification: { sound: 'default' } 
+        },
+        apns: { payload: { aps: { sound: 'default', badge: 1 } } },
         webpush: {
             notification: {
                 requireInteraction: true,
                 vibrate: [300, 100, 300],
                 icon: 'https://www.sofascore.com/favicon.ico'
+            },
+            fcm_options: {
+                link: '/'
             }
         },
         token: token
@@ -773,9 +779,21 @@ setInterval(async () => {
                         const message = {
                             notification: { title, body },
                             data: { matchId: matchId, type: 'goal' },
-                            android: { notification: { sound: 'default', priority: 'high' } },
-                            apns: { payload: { aps: { sound: 'default' } } },
-                            webpush: { notification: { requireInteraction: true, vibrate: [300, 100, 300], icon: 'https://www.sofascore.com/favicon.ico' } }
+                            android: { 
+                                priority: 'high',
+                                notification: { sound: 'default' } 
+                            },
+                            apns: { payload: { aps: { sound: 'default', badge: 1 } } },
+                            webpush: { 
+                                notification: { 
+                                    requireInteraction: true, 
+                                    vibrate: [300, 100, 300], 
+                                    icon: 'https://www.sofascore.com/favicon.ico' 
+                                },
+                                fcm_options: {
+                                    link: '/'
+                                }
+                            }
                         };
                         
                         tokensToNotify.forEach(token => {

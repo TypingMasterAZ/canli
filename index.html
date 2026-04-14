@@ -2724,6 +2724,55 @@
             opacity: 1;
             animation: pulse-badge 1s infinite;
         }
+
+            /* PWA Guide Styles */
+            .pwa-guide-overlay {
+                position: fixed;
+                top: 0; left: 0; right: 0; bottom: 0;
+                background: rgba(0,0,0,0.85);
+                display: none;
+                flex-direction: column;
+                justify-content: flex-end;
+                z-index: 10000;
+                backdrop-filter: blur(5px);
+            }
+            .pwa-guide-content {
+                background: var(--card);
+                border-radius: 24px 24px 0 0;
+                padding: 30px 24px 40px;
+                animation: slideUp 0.4s ease-out;
+                text-align: center;
+                position: relative;
+            }
+            .pwa-guide-step {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+                margin-bottom: 20px;
+                text-align: left;
+                background: rgba(255,255,255,0.03);
+                padding: 12px;
+                border-radius: 12px;
+            }
+            .pwa-guide-step i {
+                font-size: 20px;
+                color: var(--primary);
+                width: 30px;
+                text-align: center;
+            }
+            .pwa-guide-step span {
+                font-size: 14px;
+                font-weight: 500;
+                line-height: 1.4;
+            }
+            .pwa-guide-arrow {
+                font-size: 30px;
+                color: var(--primary);
+                margin-top: 10px;
+                animation: bounce 1s infinite;
+            }
+            @keyframes slideUp { from {transform: translateY(100%);} to {transform: translateY(0);} }
+            @keyframes bounce { 0%, 100% {transform: translateY(0);} 50% {transform: translateY(10px);} }
     </style>
 </head>
 
@@ -3032,6 +3081,30 @@
                     </div>
                 </div>
 
+                <!-- PWA Guide for iOS -->
+                <div id="pwaGuideOverlay" class="pwa-guide-overlay" onclick="closePwaGuide()">
+                    <div class="pwa-guide-content" onclick="event.stopPropagation()">
+                        <div style="width:40px; height:4px; background:rgba(255,255,255,0.1); border-radius:2px; margin: 0 auto 20px;"></div>
+                        <h3 style="margin:0 0 10px; font-size:18px;">Bildirişləri Aktiv Etmək Üçün</h3>
+                        <p style="color:var(--text-muted); font-size:13px; margin-bottom:25px;">iPhone-da bildirişlər yalnız tətbiq Ana Ekranda (Home Screen) olduqda işləyir.</p>
+                        
+                        <div class="pwa-guide-step">
+                            <i class="fa-solid fa-square-share-nodes"></i>
+                            <span>Brauzerin aşağısında <b>"Paylaş" (Share)</b> düyməsini basın.</span>
+                        </div>
+                        <div class="pwa-guide-step">
+                            <i class="fa-solid fa-plus-square"></i>
+                            <span>Menyudan <b>"Ana ekrana əlavə et" (Add to Home Screen)</b> seçin.</span>
+                        </div>
+                        <div class="pwa-guide-step">
+                            <i class="fa-solid fa-rocket"></i>
+                            <span>Tətbiqi Ana ekrandan açın və bildirişləri yenidən aktiv edin.</span>
+                        </div>
+                        
+                        <div class="pwa-guide-arrow">↓</div>
+                        <button onclick="closePwaGuide()" style="width:100%; padding:14px; background:var(--bg); border:1px solid rgba(255,255,255,0.1); border-radius:12px; margin-top:20px; color:white; font-weight:600;">Bağla</button>
+                    </div>
+                </div>
 
                 <span class="profile-section-title">TƏNZİMLƏMƏLƏR</span>
                 <div style="background: transparent;">
@@ -3084,6 +3157,14 @@
                             <input type="checkbox" id="soundNotifToggle" onchange="updateSetting('soundEnabled', this.checked)">
                             <span class="slider"></span>
                         </label>
+                    </div>
+
+                    <div id="testPushRow" class="profile-row" style="display:none; padding:12px 16px; background:rgba(59, 130, 246, 0.05); border-radius:12px; margin: 10px 16px; border: 1px dashed rgba(59, 130, 246, 0.3);">
+                        <div style="flex:1;">
+                            <div style="font-size:14px; font-weight:700; color:var(--primary);">Bildirişləri Yoxla</div>
+                            <div style="font-size:11px; color:var(--text-muted);">Telefonun bildiriş qəbul etdiyini yoxlayın.</div>
+                        </div>
+                        <button onclick="sendTestPush()" style="background:var(--primary); color:white; border:none; padding:8px 16px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">Yoxla</button>
                     </div>
                     
                         
@@ -4640,6 +4721,10 @@
                     });
 
                     if (token) {
+                        localStorage.setItem('fcmToken', token);
+                        if (document.getElementById('testPushRow')) {
+                            document.getElementById('testPushRow').style.display = 'flex';
+                        }
                         const favIds = (typeof favMatches !== 'undefined' ? favMatches : []).map(m => m.id ? m.id.toString() : null).filter(Boolean);
                         const leagueIds = (typeof favLeagues !== 'undefined' ? favLeagues : []).map(l => l.id ? l.id.toString() : null).filter(Boolean);
                         
@@ -4659,6 +4744,31 @@
                     }
                 } catch(e) {
                     console.error('[FCM] General Error:', e);
+                }
+            }
+
+            window.sendTestPush = async function() {
+                const token = localStorage.getItem('fcmToken');
+                if (!token) {
+                    showToast('Bildiriş tokeni tapılmadı. Zəhmət olmasa bildirişləri yenidən aktiv edin.', 'error');
+                    return;
+                }
+
+                try {
+                    showToast('Test bildirişi göndərilir...');
+                    const res = await fetch(API_BASE_URL + '/api/fcm/test-push', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ token })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        showToast('Test bildirişi göndərildi! 🚀', 'success');
+                    } else {
+                        showToast('Xəta: ' + data.message, 'error');
+                    }
+                } catch (e) {
+                    showToast('Serverlə əlaqə xətası', 'error');
                 }
             }
 
@@ -4955,6 +5065,19 @@
                     updateSetting('browserNotifEnabled', false);
                 }
             }
+
+            window.showPwaGuide = function() {
+                const guide = document.getElementById('pwaGuideOverlay');
+                if (guide) {
+                    guide.style.display = 'flex';
+                }
+            };
+            window.closePwaGuide = function() {
+                const guide = document.getElementById('pwaGuideOverlay');
+                if (guide) {
+                    guide.style.display = 'none';
+                }
+            };
 
             function clearAllData() {
                 showDialog({
