@@ -699,20 +699,23 @@ app.post("/api/fcm/test-push", async (req, res) => {
 
     const message = {
         notification: {
-            title: "Rabona Media - Test!",
+            title: "Rabona Media",
             body: "Təbriklər! Arxa plan bildirişləri artıq aktivdir 🚀"
         },
         data: { type: 'test' },
         android: { 
             priority: 'high',
-            notification: { sound: 'default' } 
+            notification: { 
+                sound: 'default',
+                icon: 'stock_ticker_update' // Placeholder or the system will use default
+            } 
         },
         apns: { payload: { aps: { sound: 'default', badge: 1 } } },
         webpush: {
             notification: {
                 requireInteraction: true,
                 vibrate: [300, 100, 300],
-                icon: 'https://www.sofascore.com/favicon.ico'
+                icon: 'https://imglink.cc/cdn/hC_7Jg-pCe.png'
             },
             fcm_options: {
                 link: '/'
@@ -751,10 +754,10 @@ setInterval(async () => {
             
             if (prev) {
                 if (hs > prev.homeScore || as > prev.awayScore) {
-                    const title = `${ev.homeTeam.name} - ${ev.awayTeam.name} GOOOL!`;
-                    const body = `${ev.homeTeam.name} ${hs} - ${as} ${ev.awayTeam.name}. Qol vuruldu!`;
+                    const title = `Rabona Media`;
+                    const body = `${ev.homeTeam.name} ${hs} - ${as} ${ev.awayTeam.name}\nQol vuruldu! ⚽`;
                     
-                    console.log(`[GOAL] ${title}`);
+                    console.log(`[GOAL] ${ev.homeTeam.name} - ${ev.awayTeam.name} GOOOL!`);
 
                     // Add to server history
                     const notifObj = {
@@ -788,7 +791,7 @@ setInterval(async () => {
                                 notification: { 
                                     requireInteraction: true, 
                                     vibrate: [300, 100, 300], 
-                                    icon: 'https://www.sofascore.com/favicon.ico' 
+                                    icon: 'https://imglink.cc/cdn/hC_7Jg-pCe.png' 
                                 },
                                 fcm_options: {
                                     link: '/'

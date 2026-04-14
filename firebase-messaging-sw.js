@@ -26,8 +26,8 @@ messaging.onBackgroundMessage((payload) => {
     
     const notificationOptions = {
         body: notificationBody,
-        icon: 'https://www.sofascore.com/favicon.ico', 
-        badge: 'https://www.sofascore.com/favicon.ico',
+        icon: 'https://imglink.cc/cdn/hC_7Jg-pCe.png', 
+        badge: 'https://imglink.cc/cdn/hC_7Jg-pCe.png',
         data: payload.data, 
         vibrate: [300, 100, 300],
         requireInteraction: true,
