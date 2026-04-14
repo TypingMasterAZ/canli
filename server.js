@@ -717,12 +717,15 @@ app.post("/api/fcm/test-push", async (req, res) => {
             } 
         },
         apns: { 
+            headers: {
+                'apns-priority': '10'
+            },
             payload: { 
                 aps: { 
+                    alert: { title: "Test Bildirişi 🚀", body: "Əgər bunu görürsünüzsə, bildiriş sisteminiz tam hazır və saz vəziyyətdədir!" },
                     sound: 'default', 
                     badge: 1,
-                    content_available: true,
-                    priority: 10
+                    'mutable-content': 1
                 } 
             } 
         },
@@ -813,11 +816,15 @@ setInterval(async () => {
                                 } 
                             },
                             apns: { 
+                                headers: {
+                                    'apns-priority': '10'
+                                },
                                 payload: { 
                                     aps: { 
+                                        alert: { title, body },
                                         sound: 'default', 
                                         badge: 1,
-                                        content_available: true
+                                        'mutable-content': 1
                                     } 
                                 } 
                             },

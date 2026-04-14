@@ -3094,30 +3094,6 @@
                     </div>
                 </div>
 
-                <!-- PWA Guide for iOS -->
-                <div id="pwaGuideOverlay" class="pwa-guide-overlay" onclick="closePwaGuide()">
-                    <div class="pwa-guide-content" onclick="event.stopPropagation()">
-                        <div style="width:40px; height:4px; background:rgba(255,255,255,0.1); border-radius:2px; margin: 0 auto 20px;"></div>
-                        <h3 style="margin:0 0 10px; font-size:18px;">Bildirişləri Aktiv Etmək Üçün</h3>
-                        <p style="color:var(--text-muted); font-size:13px; margin-bottom:25px;">iPhone-da bildirişlər yalnız tətbiq Ana Ekranda (Home Screen) olduqda işləyir.</p>
-                        
-                        <div class="pwa-guide-step">
-                            <i class="fa-solid fa-square-share-nodes"></i>
-                            <span>Brauzerin aşağısında <b>"Paylaş" (Share)</b> düyməsini basın.</span>
-                        </div>
-                        <div class="pwa-guide-step">
-                            <i class="fa-solid fa-plus-square"></i>
-                            <span>Menyudan <b>"Ana ekrana əlavə et" (Add to Home Screen)</b> seçin.</span>
-                        </div>
-                        <div class="pwa-guide-step">
-                            <i class="fa-solid fa-rocket"></i>
-                            <span>Tətbiqi Ana ekrandan açın və bildirişləri yenidən aktiv edin.</span>
-                        </div>
-                        
-                        <div class="pwa-guide-arrow">↓</div>
-                        <button onclick="closePwaGuide()" style="width:100%; padding:14px; background:var(--bg); border:1px solid rgba(255,255,255,0.1); border-radius:12px; margin-top:20px; color:white; font-weight:600;">Bağla</button>
-                    </div>
-                </div>
 
                 <span class="profile-section-title">TƏNZİMLƏMƏLƏR</span>
                 <div style="background: transparent;">
@@ -5068,12 +5044,6 @@
                             registerFCMToken();
                             showToast('Bildirişlər aktiv edildi', 'success');
                             
-                            // Show Home Screen Guide for iOS if not standalone
-                            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-                            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-                            if (isIOS && !isStandalone) {
-                                showPwaGuide();
-                            }
                         } else {
                             showDialog({
                                 title: 'İcazə Verilmədi',
@@ -5089,18 +5059,6 @@
                 }
             }
 
-            window.showPwaGuide = function() {
-                const guide = document.getElementById('pwaGuideOverlay');
-                if (guide) {
-                    guide.style.display = 'flex';
-                }
-            };
-            window.closePwaGuide = function() {
-                const guide = document.getElementById('pwaGuideOverlay');
-                if (guide) {
-                    guide.style.display = 'none';
-                }
-            };
 
             function clearAllData() {
                 showDialog({
