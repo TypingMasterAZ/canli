@@ -707,11 +707,25 @@ app.post("/api/fcm/test-push", async (req, res) => {
             priority: 'high',
             notification: { 
                 sound: 'default',
-                icon: 'stock_ticker_update' // Placeholder or the system will use default
+                channel_id: 'goal_notifications',
+                vibrate_timings_ms: [0, 500, 200, 500],
+                notification_priority: 'priority_max'
             } 
         },
-        apns: { payload: { aps: { sound: 'default', badge: 1 } } },
+        apns: { 
+            payload: { 
+                aps: { 
+                    sound: 'default', 
+                    badge: 1,
+                    content_available: true,
+                    priority: 10
+                } 
+            } 
+        },
         webpush: {
+            headers: {
+                Urgency: 'high'
+            },
             notification: {
                 requireInteraction: true,
                 vibrate: [300, 100, 300],
@@ -784,10 +798,23 @@ setInterval(async () => {
                             data: { matchId: matchId, type: 'goal' },
                             android: { 
                                 priority: 'high',
-                                notification: { sound: 'default' } 
+                                notification: { 
+                                    sound: 'default',
+                                    channel_id: 'goal_notifications',
+                                    notification_priority: 'priority_max'
+                                } 
                             },
-                            apns: { payload: { aps: { sound: 'default', badge: 1 } } },
+                            apns: { 
+                                payload: { 
+                                    aps: { 
+                                        sound: 'default', 
+                                        badge: 1,
+                                        content_available: true
+                                    } 
+                                } 
+                            },
                             webpush: { 
+                                headers: { Urgency: 'high' },
                                 notification: { 
                                     requireInteraction: true, 
                                     vibrate: [300, 100, 300], 
@@ -868,8 +895,19 @@ setInterval(async () => {
                         notification: { title, body },
                         data: { matchId: favId.toString(), type: 'reminder_soon' },
                         token: token,
-                        android: { notification: { sound: 'default', priority: 'high' } },
-                        webpush: { notification: { icon: 'https://www.sofascore.com/favicon.ico' } }
+                        android: { 
+                            priority: 'high',
+                            notification: { 
+                                sound: 'default',
+                                channel_id: 'goal_notifications',
+                                notification_priority: 'priority_max'
+                            } 
+                        },
+                        apns: { payload: { aps: { sound: 'default', badge: 1, content_available: true } } },
+                        webpush: { 
+                            headers: { Urgency: 'high' },
+                            notification: { icon: 'https://www.sofascore.com/favicon.ico', requireInteraction: true } 
+                        }
                     }).then(() => {
                         state.soon = true;
                         state.timestamp = Date.now();
@@ -891,8 +929,19 @@ setInterval(async () => {
                         notification: { title, body },
                         data: { matchId: favId.toString(), type: 'reminder_started' },
                         token: token,
-                        android: { notification: { sound: 'default', priority: 'high' } },
-                        webpush: { notification: { icon: 'https://www.sofascore.com/favicon.ico' } }
+                        android: { 
+                            priority: 'high',
+                            notification: { 
+                                sound: 'default',
+                                channel_id: 'goal_notifications',
+                                notification_priority: 'priority_max'
+                            } 
+                        },
+                        apns: { payload: { aps: { sound: 'default', badge: 1, content_available: true } } },
+                        webpush: { 
+                            headers: { Urgency: 'high' },
+                            notification: { icon: 'https://www.sofascore.com/favicon.ico', requireInteraction: true } 
+                        }
                     }).then(() => {
                         state.started = true;
                         state.timestamp = Date.now();

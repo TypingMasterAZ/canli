@@ -32,7 +32,10 @@ messaging.onBackgroundMessage((payload) => {
         vibrate: [300, 100, 300],
         requireInteraction: true,
         tag: payload.data?.matchId ? `goal-${payload.data.matchId}` : 'general-notification',
-        renotify: true
+        renotify: true,
+        actions: [
+            { action: 'open', title: 'Oyuna Bax' }
+        ]
     };
     
     // Notify main thread if open

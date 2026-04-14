@@ -4054,20 +4054,42 @@
                 }
             };
 
+            async function fetchWithRetry(url, options = {}, retries = 3, backoff = 3000) {
+                try {
+                    const res = await fetch(url, options);
+                    if (!res.ok && retries > 0 && (res.status === 504 || res.status === 502 || res.status === 503)) {
+                        console.log(`[RETRY] Server waking up? Status ${res.status}. Retrying in ${backoff}ms...`);
+                        await new Promise(r => setTimeout(r, backoff));
+                        return fetchWithRetry(url, options, retries - 1, backoff + 2000);
+                    }
+                    return res;
+                } catch (err) {
+                    if (retries > 0) {
+                        console.log(`[RETRY] Fetch error. Retrying in ${backoff}ms...`, err);
+                        await new Promise(r => setTimeout(r, backoff));
+                        return fetchWithRetry(url, options, retries - 1, backoff + 2000);
+                    }
+                    throw err;
+                }
+            }
+
             function getMatchTime(m) {
                 if (!m || !m.status) return "";
                 const statusType = m.status.type;
                 const desc = (m.status.description || "").toUpperCase();
                 
-                // If the match is already finished, show FT
-                if (statusType === 'finished' || desc === 'ENDED' || desc === 'FT' || desc === 'FINISHED') {
-                    return 'FT';
-                }
+                // 1. Hard-coded status descriptions (HT, FT, etc) take priority
+                if (desc === 'HT' || desc === 'HALFTIME' || desc === 'HALF TIME') return 'HT';
+                if (desc === 'FT' || desc === 'FINISHED' || desc === 'ENDED') return 'FT';
+                if (desc === 'ET' || desc === 'EXTRA TIME') return 'ET';
+                if (desc === 'LIVE') return 'LIVE';
+                if (desc === 'POSTPONED') return 'PPD';
+                if (desc === 'CANCELLED') return 'CAN';
                 
-                // If halftime
-                if (desc === 'HALFTIME' || desc === 'HALF TIME' || desc === 'HT') return 'HT';
-
-                // If in progress
+                // 2. Finished status check
+                if (statusType === 'finished') return 'FT';
+                
+                // 3. Live minute calculation
                 if (statusType === 'inprogress' && m.time && m.time.currentPeriodStartTimestamp) {
                     const now = Math.floor(Date.now() / 1000);
                     let elapsed = now - m.time.currentPeriodStartTimestamp;
@@ -4076,13 +4098,13 @@
                     if (totalSeconds < 0) totalSeconds = 0;
                     let min = Math.floor(totalSeconds / 60) + 1;
                     
-                    // Cap the minutes at 100 if it's not a known extra time match (sanity check)
-                    if (min > 120 && !desc.includes('ET')) return 'FT'; 
+                    // Sanity check for extremely high minutes (unlikely unless match ended but status not updated)
+                    if (min > 125 && !desc.includes('ET')) return 'FT'; 
                     
                     return min + "'";
                 }
                 
-                // If not started, show the scheduled time
+                // 4. Scheduled time
                 if (statusType === 'notstarted' && m.startTimestamp) {
                     const d = new Date(m.startTimestamp * 1000);
                     return d.toLocaleTimeString('az-AZ', { hour: '2-digit', minute: '2-digit' });
@@ -4174,35 +4196,27 @@
                 console.log("Fetching data from:", url);
                 
                 try {
-                    // Show a message if fetching takes too long (Render wake up)
-                    const wakeUpTimer = setTimeout(() => {
+                    let wakeUpTimer = setTimeout(() => {
                         showToast("Server oyadılır, zəhmət olmasa gözləyin... 🚀");
-                    }, 5000);
+                    }, 4000);
 
-                    const resEvents = await fetch(API_BASE_URL + url);
+                    const resEvents = await fetchWithRetry(API_BASE_URL + url);
                     clearTimeout(wakeUpTimer);
+                    
                     if (!resEvents.ok) {
-                        let errorMsg = `HTTP error! status: ${resEvents.status}`;
-                        try {
-                            const errData = await resEvents.json();
-                            if (errData && errData.message) errorMsg = errData.message;
-                        } catch(e) {}
-                        throw new Error(errorMsg);
+                        throw new Error(`Server xətası: ${resEvents.status}`);
                     }
                     const dataEvents = await resEvents.json();
                     
                     if (dataEvents && dataEvents.events) {
                         allEvents = dataEvents.events;
-                        console.log(`Successfully loaded ${allEvents.length} events.`);
                     } else if (Array.isArray(dataEvents)) {
                         allEvents = dataEvents;
-                        console.log(`Successfully loaded ${allEvents.length} events from array.`);
                     } else {
                         allEvents = [];
-                        console.log("No events found in response data.");
                     }
 
-                    // Sync favorites with updated data
+                    // Synchronize Favorites with the latest data objects
                     if (allEvents.length > 0) {
                         let updatedFavs = [];
                         let favsChanged = false;
@@ -4210,28 +4224,14 @@
                         favMatches.forEach(fm => {
                             const liveMatch = allEvents.find(m => m.id.toString() === fm.id.toString());
                             if (liveMatch) {
-                                const timeStr = getMatchTime(liveMatch);
-                                // Is match finished? Remove from favs as requested
-                                if (timeStr === 'FT' || liveMatch.status.type === 'finished') {
-                                    favsChanged = true;
-                                    console.log(`[FAV] Match ${fm.id} finished, removing.`);
-                                    return;
-                                }
-                                
-                                // Sync score/data
-                                if (JSON.stringify(fm.homeScore) !== JSON.stringify(liveMatch.homeScore) || 
-                                    JSON.stringify(fm.awayScore) !== JSON.stringify(liveMatch.awayScore)) {
-                                    favsChanged = true;
-                                }
                                 updatedFavs.push(liveMatch);
-                            } else {
-                                // Match not in live list. If it was live before, it's likely over.
-                                const wasLive = fm.status && (fm.status.type === 'inprogress' || fm.status.description === 'HT');
-                                if (wasLive) {
+                                // Check for visual changes (score)
+                                if (JSON.stringify(fm.homeScore) !== JSON.stringify(liveMatch.homeScore) || 
+                                    JSON.stringify(fm.awayScore) !== JSON.stringify(liveMatch.awayScore) ||
+                                    fm.status.description !== liveMatch.status.description) {
                                     favsChanged = true;
-                                    console.log(`[FAV] Match ${fm.id} ended (no longer in live feed), removing.`);
-                                    return;
                                 }
+                            } else {
                                 updatedFavs.push(fm);
                             }
                         });
@@ -4239,20 +4239,30 @@
                         if (favsChanged) {
                             favMatches = updatedFavs;
                             localStorage.setItem('favMatches', JSON.stringify(favMatches));
+                            // Always re-render favorites if the view is active
                             if (document.getElementById('favoritesView').classList.contains('active')) {
                                 renderFavoritesView();
                             }
                         }
                     }
 
-                    if (window.notificationMgr) {
-                        notificationMgr.checkUpdates(allEvents);
-                    }
-
+                    if (window.notificationMgr) notificationMgr.checkUpdates(allEvents);
                     applyFilters();
+                    
                 } catch (e) {
                     console.error("Matches fetch error:", e);
-                    if (window.showToast) showToast(`Xəta: ${e.message}`);
+                    if (window.showToast) showToast(`Bağlantı xətası: Server oyanarkən gecikmə oldu.`, 'error');
+                    
+                    const list = document.getElementById("matchList");
+                    if (list && list.innerHTML.includes('skeleton')) {
+                        list.innerHTML = `
+                        <div class="empty-state" style="padding:60px 20px;">
+                            <div style="font-size:40px; margin-bottom:20px;">⚡</div>
+                            <div style="font-weight:700; font-size:18px; margin-bottom:10px;">Bağlantı xətası</div>
+                            <div style="color:var(--text-muted); font-size:14px; margin-bottom:20px;">Server cavab vermir. Yenidən cəhd edin.</div>
+                            <button onclick="fetchData()" class="tab-btn active" style="padding:10px 24px; border-radius:12px;">Yenidən Cəhd Et</button>
+                        </div>`;
+                    }
                 }
 
                 // Fetch Local Config (Top Leagues & Categories)
