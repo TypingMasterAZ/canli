@@ -4093,8 +4093,13 @@
                 console.log("Fetching data from:", url);
                 
                 try {
-                    console.log("Fetching matches from:", API_BASE_URL + url);
+                    // Show a message if fetching takes too long (Render wake up)
+                    const wakeUpTimer = setTimeout(() => {
+                        showToast("Server oyadılır, zəhmət olmasa gözləyin... 🚀");
+                    }, 5000);
+
                     const resEvents = await fetch(API_BASE_URL + url);
+                    clearTimeout(wakeUpTimer);
                     if (!resEvents.ok) {
                         let errorMsg = `HTTP error! status: ${resEvents.status}`;
                         try {
@@ -5544,11 +5549,29 @@
                 const liveBtn = document.getElementById('filterLiveBtn');
                 if (liveBtn) liveBtn.scrollIntoView({ behavior: 'auto', inline: 'center' });
             }, 300);
+            // Clear data and show loading on boot to prevent stale data
+            if (document.getElementById('matchList')) {
+                document.getElementById('matchList').innerHTML = `
+                    <div class="loader-wrapper">
+                        <div style="text-align:center; padding:50px;">
+                            <i class="fas fa-circle-notch fa-spin" style="font-size:32px; color:var(--primary); margin-bottom:15px;"></i>
+                            <div style="font-weight:600; color:var(--text-muted);">Məlumatlar yüklənir...</div>
+                        </div>
+                    </div>`;
+            }
+
             fetchData();
             setInterval(() => {
                 fetchData();
                 generateDateTabs();
             }, 30000);
+
+            // Keep-Alive Ping (Runs every 14 minutes to prevent Render sleep while app is open)
+            setInterval(() => {
+                console.log("[Keep-Alive] Pinging backend...");
+                fetch(API_BASE_URL + '/api/ping').catch(() => {});
+            }, 14 * 60 * 1000);
+
             notificationMgr.init();
             loadProfile();
             updateAuthUI();
@@ -5562,12 +5585,6 @@
                 window.addEventListener('load', () => {
                     navigator.serviceWorker.register('sw.js?v=' + new Date().getTime()).then(reg => {
                         console.log('SW registered:', reg);
-                        // Kəş xətası problemlərini həll etmək üçün mövcud kəşləri təmizlə
-                        caches.keys().then(names => {
-                            for (let name of names) {
-                                caches.delete(name);
-                            }
-                        });
                     }).catch(err => {
                         console.log('SW registration failed:', err);
                     });

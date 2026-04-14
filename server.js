@@ -762,6 +762,10 @@ setInterval(async () => {
     }
 }, 12000);
 
+app.get("/api/ping", (req, res) => {
+    res.json({ status: "alive", timestamp: new Date().toISOString() });
+});
+
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "index.html"));
 });
