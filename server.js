@@ -986,4 +986,18 @@ app.get("/", (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server ${PORT} portunda aktivdir.`);
+    
+    // Render Self-Ping Mechanism
+    const selfUrl = process.env.RENDER_EXTERNAL_URL;
+    if (selfUrl) {
+        console.log(`[Self-Ping] Initialized for: ${selfUrl}`);
+        setInterval(async () => {
+            try {
+                await axios.get(`${selfUrl}/api/ping`);
+                console.log(`[Self-Ping] Success: ${new Date().toISOString()}`);
+            } catch (err) {
+                console.error(`[Self-Ping] Error: ${err.message}`);
+            }
+        }, 13 * 60 * 1000); 
+    }
 });

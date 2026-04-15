@@ -5670,11 +5670,28 @@
                 generateDateTabs();
             }, 30000);
 
-            // Keep-Alive Ping (Runs every 14 minutes to prevent Render sleep while app is open)
-            setInterval(() => {
-                console.log("[Keep-Alive] Pinging backend...");
-                fetch(API_BASE_URL + '/api/ping').catch(() => {});
-            }, 14 * 60 * 1000);
+            // Enhanced Keep-Alive Ping
+            function pingServer() {
+                console.log("[Keep-Alive] Pinging backend at " + new Date().toLocaleTimeString());
+                fetch(API_BASE_URL + '/api/ping')
+                    .then(r => r.json())
+                    .then(data => console.log("[Keep-Alive] Server is awake:", data.status))
+                    .catch(err => console.warn("[Keep-Alive] Ping failed:", err.message));
+            }
+
+            // Initial ping
+            pingServer();
+
+            // Periodic ping every 10 minutes
+            setInterval(pingServer, 10 * 60 * 1000);
+
+            // Ping when user returns to the tab to ensure server stays awake during use
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    console.log("[Keep-Alive] Tab became visible, pinging...");
+                    pingServer();
+                }
+            });
 
             notificationMgr.init();
             loadProfile();
