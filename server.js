@@ -718,14 +718,19 @@ app.post("/api/fcm/test-push", async (req, res) => {
         },
         apns: { 
             headers: {
-                'apns-priority': '10'
+                'apns-priority': '10',
+                'apns-topic': 'rabona-media'
             },
             payload: { 
                 aps: { 
-                    alert: { title: "Test Bildirişi 🚀", body: "Əgər bunu görürsünüzsə, bildiriş sisteminiz tam hazır və saz vəziyyətdədir!" },
+                    alert: { 
+                        title: "Test Bildirişi 🚀", 
+                        body: "Əgər bunu görürsünüzsə, bildiriş sisteminiz tam hazır və saz vəziyyətdədir!" 
+                    },
                     sound: 'default', 
                     badge: 1,
-                    'mutable-content': 1
+                    'mutable-content': 1,
+                    'content-available': 1
                 } 
             } 
         },
@@ -817,14 +822,18 @@ setInterval(async () => {
                             },
                             apns: { 
                                 headers: {
-                                    'apns-priority': '10'
+                                    'apns-priority': '10',
+                                    'apns-push-type': 'alert'
                                 },
                                 payload: { 
                                     aps: { 
                                         alert: { title, body },
                                         sound: 'default', 
                                         badge: 1,
-                                        'mutable-content': 1
+                                        'mutable-content': 1,
+                                        'content-available': 1,
+                                        category: 'GOAL_CATEGORY',
+                                        'thread-id': `match-${matchId}`
                                     } 
                                 } 
                             },

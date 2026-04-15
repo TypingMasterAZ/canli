@@ -24,21 +24,25 @@ messaging.onBackgroundMessage((payload) => {
     const notificationTitle = payload.notification?.title || payload.data?.title || "Yeni Qol!";
     const notificationBody = payload.notification?.body || payload.data?.body || "Matçda yenilik var.";
     
-    const notificationOptions = {
-        body: notificationBody,
-        icon: 'https://imglink.cc/cdn/hC_7Jg-pCe.png', 
-        badge: 'https://imglink.cc/cdn/hC_7Jg-pCe.png',
-        data: payload.data, 
-        vibrate: [500, 110, 500, 110, 450, 110, 200, 110, 170, 40],
-        requireInteraction: true,
-        tag: payload.data?.matchId ? `goal-${payload.data.matchId}` : 'general-notification',
-        renotify: true,
-        actions: [
-            { action: 'open', title: 'Oyuna Bax' }
-        ]
-    };
+    // For iOS, the system handles 'notification' payload automatically if it exists.
+    // If it's a data-only payload, we show it manually.
+    if (!payload.notification) {
+        const notificationOptions = {
+            body: notificationBody,
+            icon: 'https://imglink.cc/cdn/hC_7Jg-pCe.png', 
+            badge: 'https://imglink.cc/cdn/hC_7Jg-pCe.png',
+            data: payload.data, 
+            vibrate: [500, 110, 500, 110, 450, 110, 200, 110, 170, 40],
+            requireInteraction: true,
+            tag: payload.data?.matchId ? `goal-${payload.data.matchId}` : 'general-notification',
+            renotify: true,
+            // iOS specific: 'sound' must be present in options if showing manually
+            sound: 'default'
+        };
+        return self.registration.showNotification(notificationTitle, notificationOptions);
+    }
     
-    // Notify main thread if open
+    // Notify main thread via BroadcastChannel
     bc.postMessage({
         type: 'GOAL_NOTIFICATION',
         payload: {
@@ -48,11 +52,4 @@ messaging.onBackgroundMessage((payload) => {
             time: new Date().toLocaleTimeString('az-AZ', { hour: '2-digit', minute: '2-digit' })
         }
     });
-
-    // Only show manually if the browser doesn't handle the 'notification' block itself
-    // FCM usually handles the notification block automatically if present.
-    // If it's a data-only message, we MUST show it manually.
-    if (!payload.notification) {
-        return self.registration.showNotification(notificationTitle, notificationOptions);
-    }
 });

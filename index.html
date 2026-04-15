@@ -3484,10 +3484,8 @@
                 }
 
                 requestPermission() {
-                    if (!("Notification" in window)) return;
-                    if (Notification.permission !== "granted" && Notification.permission !== "denied") {
-                        Notification.requestPermission();
-                    }
+                    if (!("Notification" in window)) return Promise.resolve('unsupported');
+                    return Notification.requestPermission();
                 }
 
                 checkUpdates(newEvents) {
@@ -4701,11 +4699,18 @@
 
             async function registerFCMToken() {
                 try {
-                    if (Notification.permission !== 'granted') return;
+                    const status = Notification.permission;
+                    if (status !== 'granted') return;
+
                     if (typeof firebase === 'undefined' || !firebase.messaging || !firebase.messaging.isSupported()) {
                         console.warn("[FCM] Firebase or Messaging not supported/initialized in this browser.");
                         return;
                     }
+                    
+                    if (document.getElementById('testPushRow')) {
+                        document.getElementById('testPushRow').style.display = 'flex';
+                    }
+
                     const messaging = firebase.messaging();
                     
                     // Service Worker-in hazır olmasını gözləyirik
@@ -5025,37 +5030,35 @@
                         let icon = '⚠️';
                         
                         if (isIOS && !isStandalone) {
-                            msg = 'iPhone/iPad-da bildirişlər üçün: \n1. Paylaş (Share) düyməsinə klikləyin.\n2. "Ana ekrana əlavə et" (Add to Home Screen) seçin.\n3. Tətbiqi ana ekrandan açın və yenidən cəhd edin.';
+                            msg = 'iPhone-da bildirişlər üçün: \n1. Paylaş (Share) düyməsinə klikləyin.\n2. "Ana ekrana əlavə et" (Add to Home Screen) seçin.\n3. Proqramı həmin ekrandan açıb yenidən yoxlayın.';
                             icon = '📱';
                         }
 
-                        showDialog({
-                            title: 'Bildiriş Dəstəklənmir',
-                            message: msg,
-                            icon: icon
-                        });
+                        showDialog({ title: 'Dəstəklənmir', message: msg, icon: icon });
                         document.getElementById('browserNotifToggle').checked = false;
                         return;
                     }
 
-                    Notification.requestPermission().then(permission => {
+                    notificationMgr.requestPermission().then(permission => {
                         if (permission === "granted") {
                             updateSetting('browserNotifEnabled', true);
                             registerFCMToken();
                             showToast('Bildirişlər aktiv edildi', 'success');
-                            
                         } else {
-                            showDialog({
-                                title: 'İcazə Verilmədi',
-                                message: 'Brauzer tərəfindən bildirişlərə icazə verilmədi. Lütfən brauzer tənzimləmələrindən icazə verin.',
-                                icon: '🚫'
-                            });
+                            if (permission !== 'unsupported') {
+                                showDialog({
+                                    title: 'İcazə Verilmədi',
+                                    message: 'Brauzer bildirişlərə icazə vermədi. Lütfən brauzer tənzimləmələrindən icazəni sıfırlayıb yenidən cəhd edin.',
+                                    icon: '🚫'
+                                });
+                            }
                             document.getElementById('browserNotifToggle').checked = false;
                             updateSetting('browserNotifEnabled', false);
                         }
                     });
                 } else {
                     updateSetting('browserNotifEnabled', false);
+                    localStorage.removeItem('fcmToken'); // Clear token locally if disabled
                 }
             }
 
