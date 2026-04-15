@@ -700,57 +700,25 @@ app.post("/api/fcm/test-push", async (req, res) => {
     
     if (!firebaseInitialized) return res.status(500).json({ success: false, message: "Firebase not initialized" });
 
-    const message = {
+        // Minimal payload for Web Push (Safari) and Android
         notification: {
             title: "Rabona Media",
             body: "Təbriklər! Arxa plan bildirişləri artıq aktivdir 🚀"
         },
         data: { type: 'test' },
-        android: { 
-            priority: 'high',
-            notification: { 
-                sound: 'default',
-                channelId: 'goal_notifications',
-                vibrateTimingsMillis: [0, 500, 200, 500, 200, 500],
-                notificationPriority: 'PRIORITY_MAX',
-                visibility: 'PUBLIC'
-            } 
-        },
-        apns: { 
-            headers: {
-                'apns-priority': '10',
-                'apns-topic': 'rabona-media'
-            },
-            payload: { 
-                aps: { 
-                    alert: { 
-                        title: "Test Bildirişi 🚀", 
-                        body: "Əgər bunu görürsünüzsə, bildiriş sisteminiz tam hazır və saz vəziyyətdədir!" 
-                    },
-                    sound: 'default', 
-                    badge: 1,
-                    'mutable-content': 1,
-                    'content-available': 1
-                } 
-            } 
-        },
         webpush: {
-            headers: {
-                Urgency: 'high'
-            },
+            headers: { Urgency: 'high' },
             notification: {
                 requireInteraction: true,
                 vibrate: [500, 100, 500, 100, 500],
                 icon: 'https://imglink.cc/cdn/hC_7Jg-pCe.png',
                 tag: 'test-push',
-                renotify: true
+                renotify: true,
+                silent: false // Ensure it's not silent
             },
-            fcm_options: {
-                link: '/'
-            }
+            fcm_options: { link: '/' }
         },
         token: token
-    };
 
     try {
         const resp = await admin.messaging().send(message);
@@ -812,43 +780,18 @@ setInterval(async () => {
                             data: { matchId: matchId, type: 'goal' },
                             android: { 
                                 priority: 'high',
-                                notification: { 
-                                    sound: 'default',
-                                    channelId: 'goal_notifications',
-                                    notificationPriority: 'PRIORITY_MAX',
-                                    vibrateTimingsMillis: [0, 500, 100, 500, 100, 500],
-                                    visibility: 'PUBLIC'
-                                } 
-                            },
-                            apns: { 
-                                headers: {
-                                    'apns-priority': '10',
-                                    'apns-push-type': 'alert'
-                                },
-                                payload: { 
-                                    aps: { 
-                                        alert: { title, body },
-                                        sound: 'default', 
-                                        badge: 1,
-                                        'mutable-content': 1,
-                                        'content-available': 1,
-                                        category: 'GOAL_CATEGORY',
-                                        'thread-id': `match-${matchId}`
-                                    } 
-                                } 
+                                notification: { sound: 'default', channelId: 'goal_notifications' } 
                             },
                             webpush: { 
                                 headers: { Urgency: 'high' },
                                 notification: { 
                                     requireInteraction: true, 
-                                    vibrate: [500, 110, 500, 110, 450, 110, 200, 110, 170, 40], 
+                                    vibrate: [500, 110, 500], 
                                     icon: 'https://imglink.cc/cdn/hC_7Jg-pCe.png',
                                     tag: `goal-${matchId}`,
                                     renotify: true
                                 },
-                                fcm_options: {
-                                    link: '/'
-                                }
+                                fcm_options: { link: '/' }
                             }
                         };
                         
