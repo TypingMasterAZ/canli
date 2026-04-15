@@ -700,6 +700,7 @@ app.post("/api/fcm/test-push", async (req, res) => {
     
     if (!firebaseInitialized) return res.status(500).json({ success: false, message: "Firebase not initialized" });
 
+    const message = {
         // Minimal payload for Web Push (Safari) and Android
         notification: {
             title: "Rabona Media",
@@ -719,6 +720,7 @@ app.post("/api/fcm/test-push", async (req, res) => {
             fcm_options: { link: '/' }
         },
         token: token
+    };
 
     try {
         const resp = await admin.messaging().send(message);
