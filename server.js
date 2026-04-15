@@ -701,21 +701,27 @@ app.post("/api/fcm/test-push", async (req, res) => {
     if (!firebaseInitialized) return res.status(500).json({ success: false, message: "Firebase not initialized" });
 
     const message = {
-        // Minimal payload for Web Push (Safari) and Android
         notification: {
             title: "Rabona Media",
             body: "Təbriklər! Arxa plan bildirişləri artıq aktivdir 🚀"
         },
         data: { type: 'test' },
+        android: {
+            priority: 'high',
+            notification: {
+                sound: 'default',
+                channelId: 'goal_notifications',
+                notificationPriority: 'PRIORITY_MAX'
+            }
+        },
         webpush: {
             headers: { Urgency: 'high' },
             notification: {
                 requireInteraction: true,
-                vibrate: [500, 100, 500, 100, 500],
+                vibrate: [500, 100, 500],
                 icon: 'https://imglink.cc/cdn/hC_7Jg-pCe.png',
                 tag: 'test-push',
-                renotify: true,
-                silent: false // Ensure it's not silent
+                renotify: true
             },
             fcm_options: { link: '/' }
         },
@@ -723,7 +729,9 @@ app.post("/api/fcm/test-push", async (req, res) => {
     };
 
     try {
+        console.log(`[FCM] Sending test push to token: ${token.substring(0, 10)}...`);
         const resp = await admin.messaging().send(message);
+        console.log(`[FCM] Test push sent successfully. ID: ${resp}`);
         res.json({ success: true, messageId: resp });
     } catch (e) {
         console.error("[FCM] Test push error:", e);

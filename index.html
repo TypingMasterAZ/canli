@@ -3148,21 +3148,31 @@
                         </label>
                     </div>
 
+                    <!-- TEST PUSH SECTION -->
                     <div id="testPushRow" class="profile-row" style="display:none; padding:12px 16px; background:rgba(59, 130, 246, 0.05); border-radius:12px; margin: 10px 16px; border: 1px dashed rgba(59, 130, 246, 0.3);">
                         <div style="flex:1;">
                             <div style="font-size:14px; font-weight:700; color:var(--primary);">Bildirişləri Yoxla</div>
-                            <div style="font-size:11px; color:var(--text-muted);">Telefonun bildiriş qəbul etdiyini yoxlayın.</div>
+                            <div style="font-size:11px; color:var(--text-muted);">Cihazın bildiriş qəbul etdiyini yoxlayın.</div>
                         </div>
-                        <button onclick="sendTestPush()" style="background:var(--primary); color:white; border:none; padding:8px 16px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">Yoxla</button>
+                        <button onclick="sendTestPush()" style="background:var(--primary); color:white; border:none; padding:8px 16px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">YOXLA</button>
                     </div>
-                    
-                        
-                        <div style="padding:10px; font-size:10px; color:gray; word-break:break-all;" id="debugSettings"></div>
 
+                    <!-- DEBUG INFO SECTION -->
+                    <div id="debugSettings" style="display:none; padding:15px; margin:10px 16px; background:rgba(255,255,0,0.05); border:1px solid rgba(255,255,0,0.2); border-radius:12px;">
+                        <div style="font-size:11px; font-weight:800; margin-bottom:5px; color:#ffcc00;">DIAQNOSTİKA (DEBUG)</div>
+                        <div id="debugTokenBox" style="font-size:10px; color:rgba(255,255,255,0.6); word-break:break-all; font-family:monospace;">Token tapılmadı</div>
+                        <div id="debugPermBox" style="font-size:10px; color:rgba(255,255,255,0.6); margin-top:5px;">İcazə: yoxlanılır...</div>
+                    </div>
 
-                        <div style="padding:16px; display:flex; justify-content:space-between; align-items:center; cursor:pointer;"
-                            onclick="clearAllData()">
-                            <span style="font-size:15px; font-weight:600; color:#ef4444;">Bütün Məlumatları Sil</span>
+                    <div style="padding:16px; display:flex; justify-content:space-between; align-items:center; cursor:pointer;"
+                        onclick="document.getElementById('debugSettings').style.display = 'block'; showToast('Diaqnostika paneli açıldı')">
+                        <span style="font-size:12px; font-weight:600; color:var(--text-muted);">Sazlama Məlumatları (Debug)</span>
+                        <i class="fas fa-chevron-right" style="font-size:10px; color:var(--text-muted);"></i>
+                    </div>
+
+                    <div style="padding:16px; display:flex; justify-content:space-between; align-items:center; cursor:pointer;"
+                        onclick="clearAllData()">
+                        <span style="font-size:15px; font-weight:600; color:#ef4444;">Bütün Məlumatları Sil</span>
                             <span>🗑️</span>
                         </div>
                         <div id="logoutBtnBox" class="profile-row"
@@ -4700,39 +4710,45 @@
             async function registerFCMToken() {
                 try {
                     const status = Notification.permission;
-                    if (status !== 'granted') return;
+                    if (document.getElementById('debugPermBox')) {
+                        document.getElementById('debugPermBox').innerText = 'İcazə: ' + status;
+                    }
 
-                    if (typeof firebase === 'undefined' || !firebase.messaging || !firebase.messaging.isSupported()) {
-                        console.warn("[FCM] Firebase or Messaging not supported/initialized in this browser.");
+                    if (status !== 'granted') {
+                        console.log("[FCM] Permission not granted yet.");
                         return;
                     }
-                    
-                    if (document.getElementById('testPushRow')) {
-                        document.getElementById('testPushRow').style.display = 'flex';
+
+                    if (typeof firebase === 'undefined' || !firebase.messaging || !firebase.messaging.isSupported()) {
+                        console.warn("[FCM] Firebase error: Messaging not supported.");
+                        return;
                     }
 
                     const messaging = firebase.messaging();
-                    
-                    // Service Worker-in hazır olmasını gözləyirik
                     const swReg = await navigator.serviceWorker.ready;
                     
+                    console.log("[FCM] Requesting token...");
                     const token = await messaging.getToken({ 
                         serviceWorkerRegistration: swReg,
                         vapidKey: 'BPAPOqZmGdoTDrIgfoFD99QaV6bmdgab9eXNZQNjkKAzuCqsrnIdtnzi8rX99lLGHiDlp3L4fx64EBezAGHytOY' 
                     }).catch(err => {
-                        console.error("[FCM] Token alma xətası:", err);
-                        return null;
+                        console.error("[FCM] Token Error:", err);
+                        showToast("FCM Token alınmadı: " + err.message, "error");
+                        throw err;
                     });
 
                     if (token) {
                         localStorage.setItem('fcmToken', token);
+                        if (document.getElementById('debugTokenBox')) {
+                            document.getElementById('debugTokenBox').innerText = 'Token: ' + token;
+                        }
+                        
                         if (document.getElementById('testPushRow')) {
                             document.getElementById('testPushRow').style.display = 'flex';
                         }
+
                         const favIds = (typeof favMatches !== 'undefined' ? favMatches : []).map(m => m.id ? m.id.toString() : null).filter(Boolean);
                         const leagueIds = (typeof favLeagues !== 'undefined' ? favLeagues : []).map(l => l.id ? l.id.toString() : null).filter(Boolean);
-                        
-                        console.log(`[FCM] Syncing: ${favIds.length} matches, ${leagueIds.length} leagues`);
                         
                         const res = await fetch(API_BASE_URL + '/api/fcm/register', {
                             method: 'POST',
@@ -4741,9 +4757,7 @@
                         });
                         
                         if (res.ok) {
-                            console.log('[FCM] Push Notification registered successfully on server');
-                        } else {
-                            console.error('[FCM] Server registration failed');
+                            console.log('[FCM] Token synchronized.');
                         }
                     }
                 } catch(e) {

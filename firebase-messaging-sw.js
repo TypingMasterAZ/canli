@@ -18,38 +18,35 @@ const messaging = firebase.messaging();
 const bc = new BroadcastChannel('goal_notifications');
 
 messaging.onBackgroundMessage((payload) => {
-    console.log('[firebase-messaging-sw.js] Received background message ', payload);
+    console.log('[FCM SW] Received background message:', payload);
     
-    // Determine notification content
-    const notificationTitle = payload.notification?.title || payload.data?.title || "Yeni Qol!";
-    const notificationBody = payload.notification?.body || payload.data?.body || "Matçda yenilik var.";
+    const notificationTitle = payload.notification?.title || payload.data?.title || "Rabona Media";
+    const notificationBody = payload.notification?.body || payload.data?.body || "Yeni xəbər var.";
     
-    // For iOS, the system handles 'notification' payload automatically if it exists.
-    // If it's a data-only payload, we show it manually.
-    if (!payload.notification) {
-        const notificationOptions = {
-            body: notificationBody,
-            icon: 'https://imglink.cc/cdn/hC_7Jg-pCe.png', 
-            badge: 'https://imglink.cc/cdn/hC_7Jg-pCe.png',
-            data: payload.data, 
-            vibrate: [500, 110, 500, 110, 450, 110, 200, 110, 170, 40],
-            requireInteraction: true,
-            tag: payload.data?.matchId ? `goal-${payload.data.matchId}` : 'general-notification',
-            renotify: true,
-            // iOS specific: 'sound' must be present in options if showing manually
-            sound: 'default'
-        };
-        return self.registration.showNotification(notificationTitle, notificationOptions);
-    }
-    
-    // Notify main thread via BroadcastChannel
+    // Broadcast to main thread if open
     bc.postMessage({
         type: 'GOAL_NOTIFICATION',
         payload: {
             title: notificationTitle,
             body: notificationBody,
-            matchId: payload.data ? payload.data.matchId : null,
+            matchId: payload.data?.matchId,
             time: new Date().toLocaleTimeString('az-AZ', { hour: '2-digit', minute: '2-digit' })
         }
     });
+
+    // On many platforms (Chrome, Safari), if payload.notification is present, 
+    // the browser shows it automatically. We only show it manually if it's a data-only message.
+    if (!payload.notification) {
+        const notificationOptions = {
+            body: notificationBody,
+            icon: 'https://imglink.cc/cdn/hC_7Jg-pCe.png',
+            badge: 'https://imglink.cc/cdn/hC_7Jg-pCe.png',
+            data: payload.data,
+            tag: payload.data?.matchId ? `goal-${payload.data.matchId}` : 'general',
+            vibrate: [200, 100, 200],
+            requireInteraction: true,
+            sound: 'default'
+        };
+        return self.registration.showNotification(notificationTitle, notificationOptions);
+    }
 });
