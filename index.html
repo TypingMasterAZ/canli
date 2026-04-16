@@ -4051,7 +4051,21 @@
                 }
             };
 
-            async function fetchWithRetry(url, options = {}, retries = 3, backoff = 3000) {
+            async function fetchWithRetry(url, options = {}, retries = 4, backoff = 3000) {
+                // Determine if device is offline (common when iOS PWAs wake up and Wi-Fi needs 1-2 sec to attach)
+                if (!navigator.onLine) {
+                    console.log("[RETRY] Offline detected. Waiting for network...");
+                    await new Promise(resolve => {
+                        const onlineCb = () => {
+                            window.removeEventListener('online', onlineCb);
+                            resolve();
+                        };
+                        window.addEventListener('online', onlineCb);
+                        // Also try after 5 seconds just in case navigator.onLine is inaccurate
+                        setTimeout(onlineCb, 5000);
+                    });
+                }
+
                 try {
                     const res = await fetch(url, options);
                     if (!res.ok && retries > 0 && (res.status === 504 || res.status === 502 || res.status === 503)) {
@@ -4061,10 +4075,11 @@
                     }
                     return res;
                 } catch (err) {
+                    // Pure network errors (like "Failed to fetch" on iOS wake)
                     if (retries > 0) {
-                        console.log(`[RETRY] Fetch error. Retrying in ${backoff}ms...`, err);
+                        console.log(`[RETRY] Fetch error (network issue or timeout). Retrying in ${backoff}ms...`, err.message);
                         await new Promise(r => setTimeout(r, backoff));
-                        return fetchWithRetry(url, options, retries - 1, backoff + 2000);
+                        return fetchWithRetry(url, options, retries - 1, backoff + 3000); // 3000, 6000, 9000...
                     }
                     throw err;
                 }
@@ -4192,9 +4207,19 @@
 
                 console.log("Fetching data from:", url);
                 
+                // OPTIMISTIC UI: Instant Load from Cache
+                const cacheKey = 'cached_events_' + (param || 'default');
+                const cachedData = localStorage.getItem(cacheKey);
+                if (cachedData && (!allEvents || allEvents.length === 0)) {
+                    try {
+                        allEvents = JSON.parse(cachedData);
+                        applyFilters();
+                    } catch(e) {}
+                }
+                
                 try {
                     let wakeUpTimer = setTimeout(() => {
-                        showToast("Server oyadılır, zəhmət olmasa gözləyin... 🚀");
+                        showToast("Server oyadılır, canlı rejim yenilənir... 🚀");
                     }, 4000);
 
                     const resEvents = await fetchWithRetry(API_BASE_URL + url);
@@ -4212,6 +4237,9 @@
                     } else {
                         allEvents = [];
                     }
+
+                    // Save fresh data to local cache
+                    localStorage.setItem(cacheKey, JSON.stringify(allEvents));
 
                     // Synchronize Favorites with the latest data objects
                     if (allEvents.length > 0) {
@@ -4264,6 +4292,15 @@
 
                 // Fetch Local Config (Top Leagues & Categories)
                 if (topLeaguesRaw.length === 0) {
+                    const cachedTop = localStorage.getItem('cached_top_leagues');
+                    const cachedCats = localStorage.getItem('cached_categories');
+                    if (cachedTop) {
+                        try { topLeaguesRaw = JSON.parse(cachedTop); } catch(e){}
+                    }
+                    if (cachedCats) {
+                        try { allCategoriesGlobal = JSON.parse(cachedCats); } catch(e){}
+                    }
+
                     try {
                         const [resTop, resCats] = await Promise.all([
                             fetch(API_BASE_URL + '/api/top-leagues').catch(() => null),
@@ -4273,10 +4310,12 @@
                         if (resTop && resTop.ok) {
                             const topData = await resTop.json();
                             topLeaguesRaw = topData.uniqueTournaments || topData.data || [];
+                            localStorage.setItem('cached_top_leagues', JSON.stringify(topLeaguesRaw));
                         }
                         if (resCats && resCats.ok) {
                             const catData = await resCats.json();
                             allCategoriesGlobal = catData.categories || catData.data || [];
+                            localStorage.setItem('cached_categories', JSON.stringify(allCategoriesGlobal));
                         }
 
                         if (document.getElementById('leaguesView').classList.contains('active')) {
@@ -4284,7 +4323,6 @@
                         }
                     } catch (e) {
                         console.log("Local API is unreachable, some features may be disabled.");
-                        if (window.showToast) showToast("Serverə bağlanmaq mümkün olmadı.");
                     }
                 }
             }
@@ -5670,8 +5708,8 @@
                 const liveBtn = document.getElementById('filterLiveBtn');
                 if (liveBtn) liveBtn.scrollIntoView({ behavior: 'auto', inline: 'center' });
             }, 300);
-            // Clear data and show loading on boot to prevent stale data
-            if (document.getElementById('matchList')) {
+            // Show loading on boot only if no cache exists
+            if (document.getElementById('matchList') && !localStorage.getItem('cached_events_default')) {
                 document.getElementById('matchList').innerHTML = `
                     <div class="loader-wrapper">
                         <div style="text-align:center; padding:50px;">

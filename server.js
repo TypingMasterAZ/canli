@@ -954,16 +954,32 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server ${PORT} portunda aktivdir.`);
     
-    // Render Self-Ping Mechanism (Oyaq qalmaq üçün)
+    // Render Self-Ping Mechanism (Oyaq qalmaq üçün daha güclü versiya)
     setInterval(async () => {
-        const targetUrl = process.env.RENDER_EXTERNAL_URL || detectedHostUrl;
+        // Əgər URL açıq şəkildə yoxdursa, Render mühitini tapmağa çalışırıq
+        let renderUrl = process.env.RENDER_EXTERNAL_URL;
+        if (!renderUrl && process.env.RENDER_SERVICE_NAME) {
+            renderUrl = `https://${process.env.RENDER_SERVICE_NAME}.onrender.com`;
+        }
+        
+        const targetUrl = renderUrl || detectedHostUrl;
+        
         if (targetUrl) {
             try {
-                await axios.get(`${targetUrl}/api/ping`);
-                console.log(`[Self-Ping] Oyaq saxlama uğurludur (${targetUrl}): ${new Date().toISOString()}`);
+                // Render botları bloklamasın deyə gerçək istifadəçi kimliyinə bənzər yollayırıq
+                await axios.get(`${targetUrl}/api/ping`, {
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5 Mobile/15E148 Safari/604.1',
+                        'Accept': 'application/json, text/plain, */*'
+                    },
+                    timeout: 5000
+                });
+                console.log(`[Self-Ping] Oyaq saxlama uğurludur (${targetUrl}): ${new Date().toLocaleTimeString()}`);
             } catch (err) {
                 console.error(`[Self-Ping] Xəta: ${err.message}`);
             }
+        } else {
+            console.warn("[Self-Ping] Mühit bağlantısı (URL) hələ təyin edilməyib. Server yuxuya gedə bilər.");
         }
-    }, 8 * 60 * 1000); // 8 minutes to prevent 15-min idle timeout
+    }, 4 * 60 * 1000); // 15 dəqiqə limitinə tutulmamaq üçün hər 4 dəqiqədən bir vurur
 });

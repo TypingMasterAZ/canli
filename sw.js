@@ -39,10 +39,9 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Strategy: Network Only for API requests to ensure fresh match data
-  if (url.pathname.startsWith('/api/')) {
-    event.respondWith(fetch(event.request));
-    return;
+  // Strategy: Bypassing SW for API requests to prevent iOS SW timeout on slow server waking
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/socket.io/')) {
+    return; // Do nothing, let the browser handle the fetch normally
   }
 
   // Strategy: Cache First, Fallback to Network for static assets
