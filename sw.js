@@ -48,21 +48,35 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((response) => {
       return response || fetch(event.request).then((fetchRes) => {
-        // Optionally cache new static assets on the fly
+        // Cache management for non-API assets (images, fonts)
         if (event.request.method === 'GET' && fetchRes.status === 200) {
             const cacheRes = fetchRes.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(event.request, cacheRes));
+            caches.open(CACHE_NAME).then(cache => {
+                cache.put(event.request, cacheRes);
+                // Limit cache size to prevent iOS bloat
+                limitCacheSize(CACHE_NAME, 100);
+            });
         }
         return fetchRes;
       });
     }).catch(() => {
-        // If both fail and it's a navigation request, return cached index.html
         if (event.request.mode === 'navigate') {
             return caches.match('/');
         }
     })
   );
 });
+
+// Helper to limit cache size
+function limitCacheSize(name, maxItems) {
+    caches.open(name).then(cache => {
+        cache.keys().then(keys => {
+            if (keys.length > maxItems) {
+                cache.delete(keys[0]).then(() => limitCacheSize(name, maxItems));
+            }
+        });
+    });
+}
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();

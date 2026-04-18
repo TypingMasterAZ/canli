@@ -1010,9 +1010,8 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server ${PORT} portunda aktivdir.`);
     
-    // Render Self-Ping Mechanism (Oyaq qalmaq üçün daha güclü versiya)
+    // Render Self-Ping Mechanism (Oyaq qalmaq üçün ən güclü versiya)
     setInterval(async () => {
-        // Əgər URL açıq şəkildə yoxdursa, Render mühitini tapmağa çalışırıq
         let renderUrl = process.env.RENDER_EXTERNAL_URL;
         if (!renderUrl && process.env.RENDER_SERVICE_NAME) {
             renderUrl = `https://${process.env.RENDER_SERVICE_NAME}.onrender.com`;
@@ -1021,28 +1020,34 @@ app.listen(PORT, "0.0.0.0", () => {
         const targetUrl = renderUrl || detectedHostUrl;
         
         if (targetUrl && targetUrl.startsWith('http')) {
-            try {
-                // Xarici proxy (allorigins) istifadə edərək sanki başqa yerdən sorğu gəlirmiş kimi göstəririk
-                const pingUrl = encodeURIComponent(`${targetUrl}/api/ping`);
-                await axios.get(`https://api.allorigins.win/raw?url=${pingUrl}`, { timeout: 10000 });
-                console.log(`[Self-Ping] allorigins vasitəsilə oyaq saxlama uğurludur (${targetUrl}): ${new Date().toLocaleTimeString()}`);
-            } catch (err) {
-                console.error(`[Self-Ping] Proxy Xəta, birbaşa yoxlanılır: ${err.message}`);
-                // Fallback direct request
+            const timestamp = Date.now();
+            const pingUrls = [
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl + '/api/ping?t=' + timestamp)}`,
+                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl + '/api/ping?t=' + timestamp)}`,
+                `https://thingproxy.freeboard.io/fetch/${targetUrl}/api/ping?t=${timestamp}`,
+                `${targetUrl}/api/ping?t=${timestamp}` // Son fallback: Birbaşa
+            ];
+
+            let success = false;
+            for (const pUrl of pingUrls) {
+                if (success) break;
                 try {
-                    await axios.get(`${targetUrl}/api/ping`, {
+                    await axios.get(pUrl, {
                         headers: {
-                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36'
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ProScore-Ping/1.0',
+                            'Cache-Control': 'no-cache',
+                            'Pragma': 'no-cache'
                         },
-                        timeout: 5000
+                        timeout: 8000
                     });
-                    console.log(`[Self-Ping] Birbaşa oyaq saxlama uğurludur (${targetUrl})`);
-                } catch (err2) {
-                    // Ignore error
+                    console.log(`[Keep-Alive] Uğurlu: ${pUrl.split('/')[2]}`);
+                    success = true;
+                } catch (err) {
+                    // Fail silently for proxies, try next
                 }
             }
         } else {
-            console.warn("[Self-Ping] Mühit bağlantısı (URL) hələ təyin edilməyib. Server yuxuya gedə bilər.");
+            console.warn("[Keep-Alive] Server URL tapılmadı.");
         }
-    }, 4 * 60 * 1000); // 15 dəqiqə limitinə tutulmamaq üçün hər 4 dəqiqədən bir vurur
+    }, 3 * 60 * 1000); // 3 dəqiqədən bir vurur (Render 15 dəqiqə limitinə qarşı)
 });

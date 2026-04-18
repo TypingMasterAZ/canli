@@ -3506,6 +3506,13 @@
                         return;
                     }
 
+                    // --- Memory Pruning ---
+                    // If the map grows too large (>1500 matches), clear it to free indexed memory on mobile
+                    if (this.lastEventState.size > 1500) {
+                        console.log("[Memory] Pruning event state map...");
+                        this.lastEventState.clear();
+                    }
+
                     const favoritesOnly = userSettings.onlyFavNotif;
 
                     newEvents.forEach(ev => {
@@ -4219,8 +4226,8 @@
                 
                 try {
                     let wakeUpTimer = setTimeout(() => {
-                        showToast("Server oyadılır, canlı rejim yenilənir... 🚀");
-                    }, 4000);
+                        showToast("Server oyadılır, lütfən 10-15 saniyə gözləyin... 🚀", 'info');
+                    }, 4500);
 
                     const resEvents = await fetchWithRetry(API_BASE_URL + url);
                     clearTimeout(wakeUpTimer);
@@ -4290,7 +4297,6 @@
                     }
                 }
 
-                // Fetch Local Config (Top Leagues & Categories)
                 if (topLeaguesRaw.length === 0) {
                     const cachedTop = localStorage.getItem('cached_top_leagues');
                     const cachedCats = localStorage.getItem('cached_categories');
@@ -4300,6 +4306,7 @@
                     if (cachedCats) {
                         try { allCategoriesGlobal = JSON.parse(cachedCats); } catch(e){}
                     }
+                }
 
                     try {
                         const [resTop, resCats] = await Promise.all([
@@ -4376,12 +4383,18 @@
 
             function renderMatchView(grouped) {
                 const list = document.getElementById("matchList");
+                if (!list) return;
+
                 const keys = Object.keys(grouped).filter(k => grouped[k].matches.length > 0);
 
                 if (keys.length === 0) {
                     list.innerHTML = "<div class='loader-wrapper' style='text-align:center; padding:50px; font-weight:600;'>Heç bir oyun tapılmadı.</div>";
                     return;
                 }
+
+                // --- Optimization for iOS Crash Prevention ---
+                // We clear the list content before generating new heavy HTML to help JS GC
+                list.innerHTML = ''; 
 
                 let html = "";
                 for (const key of keys) {
@@ -4407,7 +4420,12 @@
                     </div>
                 </div>`;
                 }
+                
+                // Using a DocumentFragment or simple batch update
                 list.innerHTML = html;
+                
+                // Post-render cleanup hint
+                html = null; 
             }
 
             window.toggleCategory = async function(catId, catName, element) {
@@ -5721,8 +5739,10 @@
 
             fetchData();
             setInterval(() => {
-                fetchData();
-                generateDateTabs();
+                if (document.visibilityState === 'visible') {
+                    fetchData();
+                    generateDateTabs();
+                }
             }, 30000);
 
             // Enhanced Keep-Alive Ping
@@ -5738,7 +5758,11 @@
             pingServer();
 
             // Periodic ping every 10 minutes
-            setInterval(pingServer, 10 * 60 * 1000);
+            setInterval(() => {
+                if (document.visibilityState === 'visible') {
+                    pingServer();
+                }
+            }, 10 * 60 * 1000);
 
             // Ping when user returns to the tab to ensure server stays awake during use
             document.addEventListener('visibilitychange', () => {
