@@ -4223,28 +4223,28 @@
 
                 console.log("Fetching data from:", url);
                 
-                // --- PROFESSIONAL STALE-DATA POLICY ---
+                // --- OPTIMISTIC UI (Show cache even if old, then update) ---
                 const cacheKey = 'cached_events_' + (param || 'default');
                 const cacheTimeKey = cacheKey + '_time';
                 const cachedData = localStorage.getItem(cacheKey);
-                const cachedTime = parseInt(localStorage.getItem(cacheTimeKey) || '0');
-                const now = Date.now();
-
-                // If cache is > 60 seconds old, we IGNORE it and show skeletons (Strict Freshness)
-                if (cachedData && (now - cachedTime < 60000) && (!allEvents || allEvents.length === 0)) {
+                
+                if (cachedData && (!allEvents || allEvents.length === 0)) {
                     try {
                         allEvents = JSON.parse(cachedData);
                         applyFilters();
+                        console.log("Loaded cached data (optimistic)");
                     } catch(e) {}
-                } else if (!allEvents || allEvents.length === 0 || isForced) {
-                    // Show skeletons if no display data exists or if forced
+                }
+
+                if (!allEvents || allEvents.length === 0 || isForced) {
                     const list = document.getElementById("matchList");
-                    if (list && !list.innerHTML.includes('fa-spin')) {
+                    // Only show big loader if absolutely no data exists
+                    if (list && (!allEvents || allEvents.length === 0) && !list.innerHTML.includes('fa-spin')) {
                         list.innerHTML = `
                             <div class="loader-wrapper">
                                 <div style="text-align:center; padding:50px;">
                                     <i class="fas fa-circle-notch fa-spin" style="font-size:32px; color:var(--primary); margin-bottom:15px;"></i>
-                                    <div style="font-weight:600; color:var(--text-muted);">${isForced ? 'Sinxronlaşdırılır...' : 'Məlumatlar yenilənir...'}</div>
+                                    <div style="font-weight:600; color:var(--text-muted);">Sinxronlaşdırılır...</div>
                                 </div>
                             </div>`;
                     }
@@ -4274,7 +4274,7 @@
 
                     // Save fresh data + timestamp
                     localStorage.setItem(cacheKey, JSON.stringify(allEvents));
-                    localStorage.setItem(cacheTimeKey, now.toString());
+                    localStorage.setItem(cacheTimeKey, Date.now().toString());
 
                     // Synchronize Favorites
                     if (allEvents.length > 0) {
@@ -4344,7 +4344,6 @@
                         console.log("Local API is unreachable, some features may be disabled.");
                     }
                 }
-            }
 
             function createMatchRow(m, group) {
                 const timeRaw = getMatchTime(m);
