@@ -2829,6 +2829,9 @@
                 <div class="logo" id="logoTitle">RABONA MEDIA</div>
 
                 <div class="header-right">
+                    <div class="notification-bell" id="syncBtn" onclick="fetchData('live', true)" style="margin-right: 2px;">
+                        <i class="fas fa-sync-alt" id="syncIcon"></i>
+                    </div>
                     <div class="notification-bell" id="notifBell" onclick="switchMainView('notifications')">
                         <span id="notifBadge" class="notification-badge"></span>
                         🔔
@@ -4202,7 +4205,7 @@
                 if (document.getElementById('leaguesView').classList.contains('active')) renderLeaguesView();
             }
 
-            async function fetchData(param = null) {
+            async function fetchData(param = null, isForced = false) {
                 let url = '/api/matches/live';
                 
                 if (param === 'live' || isLiveFiltered) {
@@ -4212,29 +4215,53 @@
                     url = `/api/matches/${dateToFetch}`;
                 }
 
+                if (isForced) {
+                    url += (url.includes('?') ? '&' : '?') + 'force=' + Date.now();
+                    const syncIcon = document.getElementById('syncIcon');
+                    if (syncIcon) syncIcon.classList.add('fa-spin');
+                }
+
                 console.log("Fetching data from:", url);
                 
-                // OPTIMISTIC UI: Instant Load from Cache
+                // --- PROFESSIONAL STALE-DATA POLICY ---
                 const cacheKey = 'cached_events_' + (param || 'default');
+                const cacheTimeKey = cacheKey + '_time';
                 const cachedData = localStorage.getItem(cacheKey);
-                if (cachedData && (!allEvents || allEvents.length === 0)) {
+                const cachedTime = parseInt(localStorage.getItem(cacheTimeKey) || '0');
+                const now = Date.now();
+
+                // If cache is > 60 seconds old, we IGNORE it and show skeletons (Strict Freshness)
+                if (cachedData && (now - cachedTime < 60000) && (!allEvents || allEvents.length === 0)) {
                     try {
                         allEvents = JSON.parse(cachedData);
                         applyFilters();
                     } catch(e) {}
+                } else if (!allEvents || allEvents.length === 0 || isForced) {
+                    // Show skeletons if no display data exists or if forced
+                    const list = document.getElementById("matchList");
+                    if (list && !list.innerHTML.includes('fa-spin')) {
+                        list.innerHTML = `
+                            <div class="loader-wrapper">
+                                <div style="text-align:center; padding:50px;">
+                                    <i class="fas fa-circle-notch fa-spin" style="font-size:32px; color:var(--primary); margin-bottom:15px;"></i>
+                                    <div style="font-weight:600; color:var(--text-muted);">${isForced ? 'Sinxronlaşdırılır...' : 'Məlumatlar yenilənir...'}</div>
+                                </div>
+                            </div>`;
+                    }
                 }
                 
                 try {
-                    let wakeUpTimer = setTimeout(() => {
-                        showToast("Server oyadılır, lütfən 10-15 saniyə gözləyin... 🚀", 'info');
-                    }, 4500);
+                    let wakeUpTimer = null;
+                    if (!allEvents || allEvents.length === 0) {
+                        wakeUpTimer = setTimeout(() => {
+                            showToast("Server oyadılır, lütfən 10-15 saniyə gözləyin... 🚀", 'info');
+                        }, 4500);
+                    }
 
                     const resEvents = await fetchWithRetry(API_BASE_URL + url);
-                    clearTimeout(wakeUpTimer);
+                    if (wakeUpTimer) clearTimeout(wakeUpTimer);
                     
-                    if (!resEvents.ok) {
-                        throw new Error(`Server xətası: ${resEvents.status}`);
-                    }
+                    if (!resEvents.ok) throw new Error(`Server xətası: ${resEvents.status}`);
                     const dataEvents = await resEvents.json();
                     
                     if (dataEvents && dataEvents.events) {
@@ -4245,36 +4272,29 @@
                         allEvents = [];
                     }
 
-                    // Save fresh data to local cache
+                    // Save fresh data + timestamp
                     localStorage.setItem(cacheKey, JSON.stringify(allEvents));
+                    localStorage.setItem(cacheTimeKey, now.toString());
 
-                    // Synchronize Favorites with the latest data objects
+                    // Synchronize Favorites
                     if (allEvents.length > 0) {
                         let updatedFavs = [];
                         let favsChanged = false;
-
                         favMatches.forEach(fm => {
                             const liveMatch = allEvents.find(m => m.id.toString() === fm.id.toString());
                             if (liveMatch) {
                                 updatedFavs.push(liveMatch);
-                                // Check for visual changes (score)
                                 if (JSON.stringify(fm.homeScore) !== JSON.stringify(liveMatch.homeScore) || 
                                     JSON.stringify(fm.awayScore) !== JSON.stringify(liveMatch.awayScore) ||
                                     fm.status.description !== liveMatch.status.description) {
                                     favsChanged = true;
                                 }
-                            } else {
-                                updatedFavs.push(fm);
-                            }
+                            } else { updatedFavs.push(fm); }
                         });
-
                         if (favsChanged) {
                             favMatches = updatedFavs;
                             localStorage.setItem('favMatches', JSON.stringify(favMatches));
-                            // Always re-render favorites if the view is active
-                            if (document.getElementById('favoritesView').classList.contains('active')) {
-                                renderFavoritesView();
-                            }
+                            if (document.getElementById('favoritesView').classList.contains('active')) renderFavoritesView();
                         }
                     }
 
@@ -4284,17 +4304,9 @@
                 } catch (e) {
                     console.error("Matches fetch error:", e);
                     if (window.showToast) showToast(`Bağlantı xətası: Server oyanarkən gecikmə oldu.`, 'error');
-                    
-                    const list = document.getElementById("matchList");
-                    if (list && list.innerHTML.includes('skeleton')) {
-                        list.innerHTML = `
-                        <div class="empty-state" style="padding:60px 20px;">
-                            <div style="font-size:40px; margin-bottom:20px;">⚡</div>
-                            <div style="font-weight:700; font-size:18px; margin-bottom:10px;">Bağlantı xətası</div>
-                            <div style="color:var(--text-muted); font-size:14px; margin-bottom:20px;">Server cavab vermir. Yenidən cəhd edin.</div>
-                            <button onclick="fetchData()" class="tab-btn active" style="padding:10px 24px; border-radius:12px;">Yenidən Cəhd Et</button>
-                        </div>`;
-                    }
+                } finally {
+                    const syncIcon = document.getElementById('syncIcon');
+                    if (syncIcon) syncIcon.classList.remove('fa-spin');
                 }
 
                 if (topLeaguesRaw.length === 0) {
@@ -4308,11 +4320,11 @@
                     }
                 }
 
-                    try {
-                        const [resTop, resCats] = await Promise.all([
-                            fetch(API_BASE_URL + '/api/top-leagues').catch(() => null),
-                            fetch(API_BASE_URL + '/api/categories').catch(() => null)
-                        ]);
+                try {
+                    const [resTop, resCats] = await Promise.all([
+                        fetch(API_BASE_URL + '/api/top-leagues', { cache: 'no-store' }).catch(() => null),
+                        fetch(API_BASE_URL + '/api/categories', { cache: 'no-store' }).catch(() => null)
+                    ]);
 
                         if (resTop && resTop.ok) {
                             const topData = await resTop.json();
@@ -5744,6 +5756,14 @@
                     generateDateTabs();
                 }
             }, 30000);
+
+            // Sync ON RESUME (When app is opened/unlocked)
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    console.log("[Sync] App resumed, forcing fresh data...");
+                    fetchData(null, true);
+                }
+            });
 
             // Enhanced Keep-Alive Ping
             function pingServer() {

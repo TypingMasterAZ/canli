@@ -116,14 +116,21 @@ async function fetchFromSofa(path, params = {}) {
         if (GAS_PROXY_URL) {
             console.log(`[PROXY FETCH] Path: ${path}`);
             result = await axios.get(GAS_PROXY_URL, { 
-                params: { path, ...params },
+                params: { 
+                    path, 
+                    ...params,
+                    _t: Date.now() // Bypass any Proxy/Google scripting cache
+                },
                 timeout: 10000 // 10 saniyə timeout
             });
         } else {
             console.log(`[DIRECT FETCH] Path: ${path}`);
             result = await axios.get(`${SOFA_API}${path}`, { 
                 headers: HEADERS,
-                params: params,
+                params: { 
+                    ...params, 
+                    _t: Date.now() // Bypass Sofa CDN cache
+                },
                 timeout: 10000
             });
         }
@@ -260,9 +267,7 @@ app.get("/api/matches/live", async (req, res) => {
     res.set('Expires', '0');
 
     try {
-        if (globalLiveEvents && (Date.now() - lastLiveFetchTime < 15000)) {
-            return res.json(globalLiveEvents);
-        }
+        // ALWAYS fetch fresh data for /api/matches/live as per user request for professional sync
         const result = await fetchFromSofa("/sport/football/events/live");
         globalLiveEvents = result.data;
         lastLiveFetchTime = Date.now();
