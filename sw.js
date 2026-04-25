@@ -1,7 +1,6 @@
-const CACHE_NAME = 'proscore-shell-v1';
+const CACHE_NAME = 'proscore-shell-v4';
 const ASSETS_TO_CACHE = [
   '/',
-  '/index.html',
   '/manifest.json',
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css'
@@ -13,8 +12,11 @@ importScripts('/firebase-messaging-sw.js');
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW] Pre-caching offline shell');
-      return cache.addAll(ASSETS_TO_CACHE);
+      console.log('[SW] Pre-caching offline shell v4');
+      // addAll uğursuz olarsa install bloklanmasın
+      return Promise.allSettled(
+        ASSETS_TO_CACHE.map(url => cache.add(url).catch(e => console.warn('[SW] Cache miss:', url, e.message)))
+      );
     })
   );
   self.skipWaiting();
@@ -39,43 +41,63 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Strategy: Bypassing SW for API requests to prevent iOS SW timeout on slow server waking
+  // API sorğularını SW-dan keç
   if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/socket.io/')) {
-    return; // Do nothing, let the browser handle the fetch normally
+    return;
   }
 
-  // Strategy: Cache First, Fallback to Network for static assets
+  // Xarici ses fayllarını (mixkit.co, vs.) SW-dan keç - səs faylları Response kimi saxlanmır
+  if (url.hostname !== self.location.hostname) {
+    event.respondWith(
+      fetch(event.request).catch(() => new Response('', { status: 503 }))
+    );
+    return;
+  }
+
+  // index.html üçün həmişə network-first - köhnə versiya göstərməsin
+  if (url.pathname === '/' || url.pathname === '/index.html') {
+    event.respondWith(
+      fetch(event.request)
+        .then(res => {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then(c => c.put(event.request, clone));
+          return res;
+        })
+        .catch(() => caches.match('/'))
+    );
+    return;
+  }
+
+  // Digər static fayllar: Cache First
   event.respondWith(
     caches.match(event.request).then((response) => {
       return response || fetch(event.request).then((fetchRes) => {
-        // Cache management for non-API assets (images, fonts)
         if (event.request.method === 'GET' && fetchRes.status === 200) {
-            const cacheRes = fetchRes.clone();
-            caches.open(CACHE_NAME).then(cache => {
-                cache.put(event.request, cacheRes);
-                // Limit cache size to prevent iOS bloat
-                limitCacheSize(CACHE_NAME, 100);
-            });
+          const cacheRes = fetchRes.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, cacheRes);
+            limitCacheSize(CACHE_NAME, 100);
+          });
         }
         return fetchRes;
       });
     }).catch(() => {
-        if (event.request.mode === 'navigate') {
-            return caches.match('/');
-        }
+      if (event.request.mode === 'navigate') {
+        return caches.match('/');
+      }
+      return new Response('', { status: 503 });
     })
   );
 });
 
-// Helper to limit cache size
 function limitCacheSize(name, maxItems) {
-    caches.open(name).then(cache => {
-        cache.keys().then(keys => {
-            if (keys.length > maxItems) {
-                cache.delete(keys[0]).then(() => limitCacheSize(name, maxItems));
-            }
-        });
+  caches.open(name).then(cache => {
+    cache.keys().then(keys => {
+      if (keys.length > maxItems) {
+        cache.delete(keys[0]).then(() => limitCacheSize(name, maxItems));
+      }
     });
+  });
 }
 
 self.addEventListener('notificationclick', (event) => {
@@ -85,9 +107,7 @@ self.addEventListener('notificationclick', (event) => {
       if (clientList.length > 0) {
         let client = clientList[0];
         for (let i = 0; i < clientList.length; i++) {
-          if (clientList[i].focused) {
-            client = clientList[i];
-          }
+          if (clientList[i].focused) client = clientList[i];
         }
         return client.focus().then(c => {
           if (event.notification.data && event.notification.data.matchId) {
@@ -96,11 +116,11 @@ self.addEventListener('notificationclick', (event) => {
         });
       }
       return clients.openWindow('/').then(c => {
-          if (event.notification.data && event.notification.data.matchId) {
-            setTimeout(() => {
-                c.postMessage({ type: 'openMatch', matchId: event.notification.data.matchId });
-            }, 2000);
-          }
+        if (event.notification.data && event.notification.data.matchId) {
+          setTimeout(() => {
+            c.postMessage({ type: 'openMatch', matchId: event.notification.data.matchId });
+          }, 2000);
+        }
       });
     })
   );
