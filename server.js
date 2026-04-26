@@ -1,4 +1,6 @@
 const express = require("express");
+const fs = require("fs");
+const fsPromises = require("fs").promises;
 // Version: 1.1.5 - Improved SofaScore bypass + API-Football fallback
 console.log("-----------------------------------------");
 console.log(`[STARTUP] Server booting at ${new Date().toISOString()}`);
@@ -9,7 +11,6 @@ const axios = require("axios");
 const cors = require("cors");
 const bcrypt = require("bcryptjs");
 const app = express();
-const fs = require("fs");
 const nodemailer = require("nodemailer");
 const admin = require("firebase-admin");
 
@@ -131,7 +132,9 @@ function getHeaders() {
         "sec-fetch-dest": "empty",
         "sec-fetch-mode": "cors",
         "sec-fetch-site": "same-site",
-        "Connection": "keep-alive"
+        "Connection": "keep-alive",
+        "DNT": "1",
+        "Upgrade-Insecure-Requests": "1"
     };
 }
 
@@ -262,22 +265,32 @@ async function fetchFromSofa(path, params = {}) {
         console.warn(`[CODETABS FAIL] ${path}: ${e.message}`);
     }
 
-    // --- Attempt 8: htmldriven CORS proxy ---
+    // --- Attempt 8: cors-proxy.htmldriven.com ---
     try {
         console.log(`[HTMLDRIVEN] ${path}`);
-        const proxyUrl3 = `https://cors-anywhere.herokuapp.com/${fullUrl}`;
-        const result = await tryFetch(proxyUrl3, {
-            timeout: 10000,
-            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Origin': 'https://www.sofascore.com' }
-        });
+        const proxyUrl3 = `https://cors-proxy.htmldriven.com/?url=${fullUrl}`;
+        const result = await tryFetch(proxyUrl3, { timeout: 10000 });
         const parsed = typeof result.data === 'string' ? JSON.parse(result.data) : result.data;
-        if (isSofaError(parsed)) throw new Error('SOFA_BLOCKED_VIA_HTMLDRIVEN');
         const wrapped = { ...result, data: parsed };
         lastGoodData[cacheKey] = { data: parsed, ts: Date.now() };
         return wrapped;
     } catch (e) {
         console.warn(`[HTMLDRIVEN FAIL] ${path}: ${e.message}`);
     }
+
+    // --- Attempt 9: Scraper API Fallback (Random Public CORS Anywhere) ---
+    const publicProxies = [
+        "https://cors-anywhere.herokuapp.com/",
+        "https://api.proxyscrape.com/v2/?request=displayproxies&protocol=http&timeout=10000&country=all&ssl=all&anonymity=all"
+    ];
+    // We only try one of these as they are often down
+    try {
+        const base = "https://corsproxy.io/?";
+        const result = await tryFetch(base + encodedUrl, { timeout: 10000 });
+        const parsed = typeof result.data === 'string' ? JSON.parse(result.data) : result.data;
+        lastGoodData[cacheKey] = { data: parsed, ts: Date.now() };
+        return { ...result, data: parsed };
+    } catch(e) {}
 
     // --- Fallback: Serve last known good data (max 15 minutes stale) ---
     const stale = lastGoodData[cacheKey];
@@ -476,7 +489,12 @@ app.get("/api/matches/live", async (req, res) => {
     res.set('Expires', '0');
 
     try {
-        // ALWAYS fetch fresh data for /api/matches/live as per user request for professional sync
+        // Optimization: If we have very fresh data (< 15s) from background worker, use it
+        if (globalLiveEvents && globalLiveEvents.events && (Date.now() - lastLiveFetchTime < 15000)) {
+            console.log(`[LIVE] Serving fresh background data (age: ${Math.round((Date.now() - lastLiveFetchTime)/1000)}s)`);
+            return res.json(globalLiveEvents);
+        }
+
         const result = await fetchFromSofa("/sport/football/events/live");
         globalLiveEvents = result.data;
         lastLiveFetchTime = Date.now();
@@ -888,7 +906,10 @@ loadRegistrations();
 
 function saveRegistrations() {
     try {
-        fs.writeFileSync(REG_FILE, JSON.stringify(fcmRegistrations, null, 2));
+        // Use async writeFile to avoid blocking the event loop
+        fsPromises.writeFile(REG_FILE, JSON.stringify(fcmRegistrations, null, 2)).catch(err => {
+            console.error("[FCM] Save failed:", err);
+        });
     } catch (e) {
         console.error("[FCM] Error saving registrations:", e.message);
     }
