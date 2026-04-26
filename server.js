@@ -634,6 +634,26 @@ app.get("/api/category/:id/tournaments", async (req, res) => {
 });
 
 // Yeni API: Turnir Məlumatı (Single League Info)
+// Alias üçün unique-tournament
+app.get("/api/unique-tournament/:id", async (req, res) => {
+    try {
+        const result = await fetchFromSofa(`/unique-tournament/${req.params.id}`);
+        res.json(result.data);
+    } catch (error) {
+        res.status(500).json({ error: true });
+    }
+});
+
+app.get("/api/unique-tournament/:id/seasons", async (req, res) => {
+    try {
+        const result = await fetchFromSofa(`/unique-tournament/${req.params.id}/seasons`);
+        res.json(result.data);
+    } catch (error) {
+        res.status(500).json({ error: true });
+    }
+});
+
+// Mövcud tournament marşrutları
 app.get("/api/tournament/:id", async (req, res) => {
     try {
         const result = await fetchFromSofa(`/unique-tournament/${req.params.id}`);
@@ -1064,15 +1084,48 @@ let lastLiveFetchTime = 0;
 
 setInterval(async () => {
     try {
-        const result = await fetchFromSofa("/sport/football/events/live");
-        if (!result || !result.data || !result.data.events) return;
-        
-        globalLiveEvents = result.data;
+        const today = new Date().toISOString().split('T')[0];
+        // Fetch from BOTH live endpoint and scheduled endpoint to ensure 100% coverage
+        const [liveRes, scheduledRes] = await Promise.all([
+            fetchFromSofa("/sport/football/events/live").catch(() => null),
+            fetchFromSofa(`/sport/football/scheduled-events/${today}`).catch(() => null)
+        ]);
+
+        let mergedEvents = [];
+        let seenIds = new Set();
+
+        const processResult = (res) => {
+            if (res && res.data && res.data.events) {
+                res.data.events.forEach(ev => {
+                    if (!seenIds.has(ev.id)) {
+                        // Only add if live (inprogress) or if from liveRes
+                        if (ev.status?.type === 'inprogress' || res === liveRes) {
+                            mergedEvents.push(ev);
+                            seenIds.add(ev.id);
+                        }
+                    }
+                });
+            }
+        };
+
+        processResult(liveRes);
+        processResult(scheduledRes);
+
+        if (mergedEvents.length === 0) {
+            console.log("[Worker] No events found in SofaScore, falling back to ESPN...");
+            const espn = await fetchLiveFromESPN().catch(() => null);
+            if (espn && espn.events) {
+                mergedEvents = espn.events;
+            }
+        }
+
+        globalLiveEvents = { events: mergedEvents };
         lastLiveFetchTime = Date.now();
+        console.log(`[Worker] Synced ${mergedEvents.length} live matches (SofaScore Hybrid)`);
 
         if (Object.keys(fcmRegistrations).length === 0) return;
         
-        const events = result.data.events;
+        const events = mergedEvents;
         
         events.forEach(ev => {
             const matchId = ev.id.toString();
