@@ -4578,7 +4578,6 @@
                 // We clear the list content before generating new heavy HTML to help JS GC
                 list.innerHTML = ''; 
 
-                let html = "";
                 for (const key of keys) {
                     const group = grouped[key];
                     const isFav = favLeagues.some(f => f.id.toString() === group.id.toString());
