@@ -1,7 +1,7 @@
 const express = require("express");
 const fs = require("fs");
 const fsPromises = require("fs").promises;
-// Version: 1.1.5 - Improved SofaScore bypass + API-Football fallback
+// Version: 1.1.6 - Optimized fetch + Improved UI
 console.log("-----------------------------------------");
 console.log(`[STARTUP] Server booting at ${new Date().toISOString()}`);
 console.log("-----------------------------------------");
